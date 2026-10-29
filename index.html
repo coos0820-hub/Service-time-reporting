@@ -45,6 +45,11 @@ button{font-family:inherit}
 .hint{font-size:11px;color:var(--grey2)}
 .calc{background:#EFF6FF;color:var(--blue);font-weight:700;border-radius:6px;padding:5px 12px;font-size:13px}
 .msg{font-size:12px;font-weight:600}
+.it-tbl{border-collapse:collapse;width:100%;max-width:980px}.it-tbl th{font-size:11.5px;color:var(--grey2);text-align:left;padding:2px 4px;font-weight:600}.it-tbl td{padding:3px 4px;vertical-align:middle;border-top:1px solid #eef0f3}
+.it-tbl select.inp,.it-tbl input.inp{width:100%}.it-tbl .ichips{display:flex;flex-wrap:wrap;gap:4px}.it-tbl .ichips .chip{padding:3px 9px;font-size:12px}
+.it-st{font-size:12.5px;font-weight:700;margin-left:6px}.it-st.ok{color:var(--green2)}.it-st.bad{color:var(--red)}
+.fsbanner{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:8px}
+@media(max-width:700px){.it-tbl thead{display:none}.it-tbl tr{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-top:1px solid #ddd;padding:6px 0}.it-tbl td{border:0}.it-tbl td.svc,.it-tbl td.wide{grid-column:1/3}.it-tbl td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:#888;margin-bottom:2px}}
 .msg.bad{color:var(--red)}.msg.ok{color:var(--green2)}.msg.warn{color:var(--orange)}
 .btn{border:none;border-radius:7px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer}
 .btn-p{background:var(--green2);color:#fff}.btn-p:hover{background:var(--green)}
@@ -122,7 +127,7 @@ body.station .notstation{display:none!important}
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V1.9.10<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.0<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
   <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
@@ -370,6 +375,12 @@ function checkRec(r){
   if(code(r.type)==='FS'&&!r.cust&&!NO_CUST_SVC.includes(r.svc)) return '客戶現場服務要選客戶';
   if((code(r.type)==='OTH'||(code(r.type)==='FS'&&r.svc==='其他'))&&!String(r.note||'').trim()) return '選「其他」請在備註寫明做什麼';
   if(r.kind==='FS'&&+r.travel>=h) return '交通時數不能大於等於總工時';
+  if(r.kind==='FS'&&Array.isArray(r.items)&&r.items.length){
+    for(let i=0;i<r.items.length;i++){const it=r.items[i],n=`第 ${i+1} 台`;
+      if(!it.model&&!it.modelNo) return n+'要選機種或填型號'; if(!it.svc) return n+'要選服務項目';
+      if(!(+it.hours>0)) return n+'要填工時'; if(!(+it.qty>=1)) return n+'台數至少 1'}
+    const on=r1(h-(+r.travel||0)),tot=r1(r.items.reduce((a,i)=>a+(+i.hours||0),0));
+    if(Math.abs(on-tot)>0.05) return `各台工時合計 ${fmt1(tot)} h，要等於現場工時 ${fmt1(on)} h`}
   return '';
 }
 // ── WO 格式（由入口網站「共用設定」管理）──
@@ -386,11 +397,26 @@ const FORM={ws:{},fs:{}};
 const FILTER={ws:{},fs:{}};
 const NO_CUST_SVC=['廠內作業','其他'];  // 這些服務項目：比照廠內格式，只填人員、時間、備註
 const fsType=()=>M().types.find(t=>code(t)==='FS')||'FS 客戶現場服務';
+const SITE='客戶現場';                                   // 廠外「類別」：客戶現場／廠內作業／其他
+const siteSvcs=()=>M().services.filter(v=>!NO_CUST_SVC.includes(v));
+const blankItem=(p)=>({model:'',modelNo:'',qty:1,svc:(p&&p.svc)||'',hours:'',wo:''});
+const r1=n=>Math.round(n*10)/10;
+// 舊紀錄（單一機種）→ 設備明細
+function itemsOf(r){if(Array.isArray(r.items)&&r.items.length)return r.items;
+  if(r.kind!=='FS'||NO_CUST_SVC.includes(r.svc))return [];
+  return [{model:r.model||'',modelNo:r.modelNo||'',qty:1,svc:r.svc||'',hours:r1(hoursOf(r)-(+r.travel||0)),wo:r.wo||''}]}
+// 報表用：一筆多台 → 拆成每台一筆（工時＝該列工時＋依比例分攤的交通），總工時不變
+function explode(recs){const out=[];recs.forEach(r=>{
+  if(r.kind==='FS'&&Array.isArray(r.items)&&r.items.length){const tot=r.items.reduce((a,i)=>a+(+i.hours||0),0),tr=+r.travel||0,h=hoursOf(r);
+    r.items.forEach((it,k)=>{const ratio=tot?(+it.hours||0)/tot:1/r.items.length;out.push({...r,_pid:r.id+'#'+k,model:it.model,modelNo:it.modelNo,svc:it.svc,wo:it.wo||'',_qty:+it.qty||1,travel:r1(tr*ratio*100)/100,_h:tot?(+it.hours||0)+tr*ratio:h*ratio})})}
+  else out.push(r)});return out}
+const HRS=r=>r._h!=null?r._h:hoursOf(r);
 const wsTypes=()=>M().types.filter(t=>code(t)!=='FS');
 function blankForm(kind){
   const keep=FORM[kind]||{};
   return {id:null,kind:kind.toUpperCase(),date:keep.date||today(),staff:keep.staff||myName(),
-    type:kind==='ws'?(wsTypes()[0]||'WS 工單維修'):fsType(),shift:'',start:'',end:'',wo:'',station:'',cust:'',travel:'',svc:'',model:'',modelNo:'',note:''};
+    type:kind==='ws'?(wsTypes()[0]||'WS 工單維修'):fsType(),shift:'',start:'',end:'',wo:'',station:'',cust:'',travel:'',svc:'',model:'',modelNo:'',note:'',
+    ...(kind==='fs'?{mode:SITE,items:[blankItem()],mates:[],fsn:''}:{})};
 }
 function buildPage(kind){
   const isWS=kind==='ws', el=document.getElementById('p-'+kind);
@@ -402,7 +428,8 @@ function buildPage(kind){
       <button class="btn btn-o btn-s" onclick="setF('${kind}','date',today())">今天</button></div>
     <label class="req">人員</label><div class="chips" id="${kind}-staff"></div>
     ${isWS?`<label class="req">工作類型</label><div class="chips" id="${kind}-type"></div>`:
-    `<label class="req" id="${kind}-svcL">服務項目</label><div class="chips" id="${kind}-svc"></div>`}
+    `<label>同行人員</label><div class="row"><div class="mchips chips" id="fs-mates"></div><span class="hint">一起去的人勾起來，存檔時每人各存一筆</span></div>
+    <label class="req">類別</label><div class="chips" id="${kind}-mode"></div>`}
     <label class="req">時間</label><div class="row"><div class="chips" id="${kind}-shift"></div>
       <input class="inp t" id="${kind}-start" placeholder="開始"> – <input class="inp t" id="${kind}-end" placeholder="結束">
       <span class="hint">點時段一鍵帶入，或直接打 830、1730</span></div>
@@ -416,11 +443,8 @@ function buildPage(kind){
     <label class="fsx" id="${kind}-custL">客戶</label><div class="row fsx"><input class="inp" id="${kind}-cust" list="custList" style="width:220px" placeholder="選擇或輸入客戶">
       <span class="hint">新客戶可直接輸入，常用的再到主檔新增</span></div>
     <label class="fsx" id="fs-travL">交通時數</label><div class="row fsx" id="fs-travR"><div class="chips" id="${kind}-travel"></div><input class="inp t" id="fs-travelIn" inputmode="decimal" placeholder="其他" title="其他時數，例如 5 或 6.5"><span class="hint">來回合計，小時；不在按鈕裡的直接填</span></div>
-    <label class="fsx">工單號</label><div class="row fsx"><input class="inp" id="${kind}-wo" list="woList" style="width:220px" placeholder="有工單才填">
-      <span class="hint">輸入用過的工單會自動帶出機種、型號</span></div>
-    <label class="fsx">機種</label><div class="chips fsx" id="${kind}-model"></div>
-    <label class="fsx">型號</label><div class="row fsx"><input class="inp" id="${kind}-modelNo" list="mnList-${kind}" style="width:220px" placeholder="例如 RA0100F">
-      <span class="hint">直接輸入；選了機種會提示用過的型號</span></div>`}
+    <label class="fsx req">設備明細</label><div class="fsx" id="fs-items"></div>
+    <label class="fsx">FSN</label><div class="row fsx"><input class="inp" id="fs-fsn" style="width:220px" placeholder="訊息單號（從派工連結會自動帶入）"><span class="hint">選填；可跟訊息單案件系統對照</span></div>`}
     <label>備註</label><input class="inp" id="${kind}-note" style="width:100%;max-width:560px" placeholder="${isWS?'發現的問題、缺料、上課或支援的內容…':'服務內容、更換零件、待辦…'}">
     <label></label><div class="row">
       <span class="calc" id="${kind}-calc">工時 —</span>
@@ -435,10 +459,10 @@ function buildPage(kind){
     <label class="hint"><input type="checkbox" id="${kind}-fe"> 只看待修正</label>
   </div><div class="card-bd"><div class="tw"><table class="dt" id="${kind}-tbl"></table></div>
     <div class="hint" id="${kind}-sum" style="margin-top:6px"></div></div></div>`;
-  ['date','start','end','wo','cust','modelNo','note'].forEach(f=>{
+  ['date','start','end','wo','cust','modelNo','note','fsn'].forEach(f=>{
     const i=document.getElementById(kind+'-'+f); if(!i) return;
     if(f==='wo'){i.addEventListener('change',()=>woFill(kind)); i.addEventListener('input',()=>{const we=woCheck(i.value.toUpperCase()); i.classList.toggle('err',!!we); i.title=we})}
-    i.addEventListener('input',()=>{FORM[kind][f]=i.value; if(f==='start'||f==='end'){FORM[kind].shift='';paintChips(kind)} updCalc(kind)});
+    i.addEventListener('input',()=>{FORM[kind][f]=i.value; if(f==='start'||f==='end'){FORM[kind].shift='';paintChips(kind)} updCalc(kind); if(kind==='fs')itemStatus()});
     if(f==='start'||f==='end') i.addEventListener('blur',()=>{const n=normTime(i.value);
       if(n===null){i.classList.add('err');return} i.classList.remove('err'); i.value=n; FORM[kind][f]=n; matchShift(kind); updCalc(kind)});
     i.addEventListener('keydown',e=>{if(e.key==='Enter'){i.blur();saveForm(kind)}});
@@ -448,6 +472,7 @@ function buildPage(kind){
       if(v===''){FORM.fs.travel='';ti.classList.remove('err')}else if(/^\d+(\.\d+)?$/.test(v)&&+v<24){FORM.fs.travel=String(+v);ti.classList.remove('err')}else{ti.classList.add('err');return}
       paintChips('fs')});
     ti.addEventListener('keydown',e=>{if(e.key==='Enter'){ti.blur();saveForm('fs')}})}
+  if(kind==='fs')bindItems();
   const d=new Date(); d.setDate(d.getDate()-13);
   document.getElementById(kind+'-f1').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
   document.getElementById(kind+'-f2').value=today();
@@ -461,8 +486,8 @@ function paintAllChips(kind){
   document.getElementById(kind+'-staff').innerHTML=chipHTML(kind,'staff',M().staff);
   if(kind==='ws') document.getElementById(kind+'-type').innerHTML=chipHTML(kind,'type',wsTypes(),t=>{const[c,...n]=t.split(' ');return `${esc(c)}<small>${esc(n.join(' '))}</small>`});
   document.getElementById(kind+'-shift').innerHTML=chipHTML(kind,'shift',Object.keys(M().shifts));
-  document.getElementById(kind+'-model').innerHTML=chipHTML(kind,'model',M().models);
-  if(kind==='fs') document.getElementById(kind+'-svc').innerHTML=chipHTML(kind,'svc',M().services);
+  if(kind==='ws') document.getElementById(kind+'-model').innerHTML=chipHTML(kind,'model',M().models);
+  if(kind==='fs') document.getElementById('fs-mode').innerHTML=chipHTML(kind,'mode',[SITE,...NO_CUST_SVC]);
   if(kind==='ws') document.getElementById('ws-station').innerHTML=chipHTML(kind,'station',M().stations);
   else document.getElementById('fs-travel').innerHTML=chipHTML(kind,'travel',TRAVEL_OPTS.map(String),v=>v==='0'?'0':v);
   const fp=document.getElementById(kind+'-fp'), cur=fp.value;
@@ -475,10 +500,12 @@ function paintChips(kind){
     const field=box.id.split('-')[1];
     box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',String(F[field])===c.dataset.v));
   });
-  ['date','start','end','wo','cust','modelNo','note'].forEach(f=>{const i=document.getElementById(kind+'-'+f);if(i&&document.activeElement!==i)i.value=F[f]||''});
+  ['date','start','end','wo','cust','modelNo','note','fsn'].forEach(f=>{const i=document.getElementById(kind+'-'+f);if(i&&document.activeElement!==i)i.value=F[f]||''});
   const c=code(F.type);
   document.querySelectorAll(`#p-${kind} [data-show]`).forEach(e=>e.style.display=e.dataset.show.split(',').includes(c)?'':'none');
-  if(kind==='fs'){const inPlant=NO_CUST_SVC.includes(F.svc);
+  if(kind==='fs'){const inPlant=F.mode!==SITE;
+    document.getElementById('fs-mates').innerHTML=F.id?'<span class="hint">編輯單筆紀錄時不能加同行人員</span>':M().staff.filter(x=>x!==F.staff).map(x=>`<button class="chip ${(F.mates||[]).includes(x)?'on':''}" data-v="${esc(x)}" onclick="togMate(this.dataset.v)">${esc(x)}</button>`).join('');
+    renderItems();
     document.getElementById('fs-custL').classList.toggle('req',!inPlant);
     document.querySelectorAll('#p-fs .fsx').forEach(e=>e.style.display=inPlant?'none':'');
     document.getElementById('fs-note').placeholder=inPlant?'做了什麼（「其他」必填）':'服務內容、更換零件、待辦…';
@@ -496,6 +523,8 @@ function setF(kind,field,v){
   const F=FORM[kind];
   if((field==='station'||field==='travel'||field==='model')&&String(F[field])===v) v='';   // 再點一次取消
   F[field]=v;
+  if(field==='mode'){F.svc=v===SITE?'':v; if(v===SITE&&!(F.items||[]).length)F.items=[blankItem()]}
+  if(field==='staff'&&kind==='fs')F.mates=(F.mates||[]).filter(x=>x!==v);
   if(field==='shift'&&M().shifts[v]){F.start=M().shifts[v][0];F.end=M().shifts[v][1];
     document.getElementById(kind+'-start').classList.remove('err');document.getElementById(kind+'-end').classList.remove('err')}
   paintChips(kind);
@@ -505,6 +534,43 @@ function updCalc(kind){
   const F=FORM[kind], h=hoursOf(F), el=document.getElementById(kind+'-calc');
   if(!h){el.textContent='工時 —';return}
   el.textContent=kind==='fs'&&+F.travel?`工時 ${fmt1(h)} h（現場 ${fmt1(h-F.travel)}／交通 ${F.travel}）`:`工時 ${fmt1(h)} h`;
+  if(kind==='fs')itemStatus();
+}
+// ── 廠外：同行人員、設備明細 ──
+function togMate(n){const F=FORM.fs;F.mates=(F.mates||[]).includes(n)?F.mates.filter(x=>x!==n):[...(F.mates||[]),n];paintChips('fs')}
+function onsiteH(){const F=FORM.fs,h=hoursOf(F);return h?r1(h-(+F.travel||0)):0}
+function renderItems(){
+  const F=FORM.fs,box=document.getElementById('fs-items');if(!box)return;if(!Array.isArray(F.items))F.items=[];
+  const mopt=v=>['',...M().models,...(v&&!M().models.includes(v)?[v]:[])].map(m=>`<option value="${esc(m)}" ${m===v?'selected':''}>${m?esc(m):'— 機種 —'}</option>`).join('');
+  box.innerHTML=`<table class="it-tbl"><thead><tr><th style="width:130px">機種</th><th style="width:150px">型號</th><th style="width:64px">台數</th><th>服務項目</th><th style="width:80px">工時 h</th><th style="width:150px">工單號</th><th style="width:34px"></th></tr></thead><tbody>
+   ${F.items.map((it,i)=>`<tr>
+    <td data-l="機種"><select class="inp" data-it="${i}" data-f="model">${mopt(it.model)}</select></td>
+    <td data-l="型號"><input class="inp" data-it="${i}" data-f="modelNo" value="${esc(it.modelNo)}" list="mnList-fs" placeholder="RA0100F"></td>
+    <td data-l="台數"><input class="inp" data-it="${i}" data-f="qty" type="number" min="1" value="${esc(it.qty)}"></td>
+    <td class="svc" data-l="服務項目"><div class="ichips">${siteSvcs().map(v=>`<button class="chip ${it.svc===v?'on':''}" data-isvc="${i}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div></td>
+    <td data-l="工時 h"><input class="inp" data-it="${i}" data-f="hours" inputmode="decimal" value="${esc(it.hours)}" placeholder="小時"></td>
+    <td data-l="工單號"><input class="inp" data-it="${i}" data-f="wo" value="${esc(it.wo||'')}" list="woList" placeholder="有才填"></td>
+    <td>${F.items.length>1?`<button class="ib del" data-idel="${i}" title="移除">✕</button>`:''}</td></tr>`).join('')}</tbody></table>
+   <div class="row" style="margin-top:6px"><button class="btn btn-o btn-s" data-iadd>＋ 加一台</button><button class="btn btn-o btn-s" data-iavg title="依台數把現場工時平均分到各列，再自己微調">平均帶入工時</button><span class="it-st" id="fs-itst"></span></div>`;
+  itemStatus();
+}
+function itemStatus(){const el=document.getElementById('fs-itst');if(!el)return;const F=FORM.fs;
+  const on=onsiteH(),tot=r1((F.items||[]).reduce((a,i)=>a+(+i.hours||0),0));
+  if(!on){el.className='it-st';el.textContent='先填時間，才能分配各台工時';return}
+  const d=r1(on-tot);el.className='it-st '+(Math.abs(d)<=0.05?'ok':'bad');
+  el.textContent=Math.abs(d)<=0.05?`✓ 各台合計 ${fmt1(tot)} h ＝ 現場工時`:`現場工時 ${fmt1(on)} h，已分配 ${fmt1(tot)} h，${d>0?'還差 '+fmt1(d):'多了 '+fmt1(-d)} h`}
+function bindItems(){const box=document.getElementById('fs-items');
+  box.addEventListener('input',e=>{const t=e.target,i=t.dataset.it;if(i===undefined)return;const it=FORM.fs.items[+i],f=t.dataset.f;
+    it[f]=f==='qty'?(+t.value||''):f==='modelNo'||f==='wo'?t.value.toUpperCase():t.value;itemStatus()});
+  box.addEventListener('change',e=>{const t=e.target;if(t.dataset.f==='modelNo'){const it=FORM.fs.items[+t.dataset.it];it.modelNo=t.value.trim().toUpperCase();t.value=it.modelNo;
+      if(!it.model){const p=live().find(r=>itemsOf(r).some(x=>x.modelNo===it.modelNo&&x.model)||(r.modelNo===it.modelNo&&r.model));if(p){const x=itemsOf(p).find(x=>x.modelNo===it.modelNo)||p;it.model=x.model||p.model;renderItems()}}}
+    if(t.dataset.f==='hours'){const v=t.value.trim();if(v&&!/^\d+(\.\d+)?$/.test(v))t.classList.add('err');else t.classList.remove('err')}});
+  box.addEventListener('click',e=>{const t=e.target,F=FORM.fs;
+    if(t.dataset.isvc!==undefined){const it=F.items[+t.dataset.isvc];it.svc=it.svc===t.dataset.v?'':t.dataset.v;renderItems();return}
+    if(t.dataset.idel!==undefined){F.items.splice(+t.dataset.idel,1);renderItems();return}
+    if(t.dataset.iadd!==undefined){F.items.push(blankItem(F.items[F.items.length-1]));renderItems();return}
+    if(t.dataset.iavg!==undefined){const on=onsiteH();if(!on){alert('請先填時間');return}const q=F.items.reduce((a,i)=>a+(+i.qty||1),0);let rest=on;
+      F.items.forEach((it,k)=>{if(k===F.items.length-1)it.hours=String(r1(rest));else{const v=Math.round(on*(+it.qty||1)/q*2)/2;it.hours=String(v);rest-=v}});renderItems()}});
 }
 function saveForm(kind){
   const F=FORM[kind], msg=document.getElementById(kind+'-msg');
@@ -512,25 +578,33 @@ function saveForm(kind){
   if(kind==='fs') F.type=fsType();
   if(kind==='ws'){const c=code(F.type); if(!['WS','SYS','TEST'].includes(c)){F.wo='';F.model='';F.modelNo=''} if(c!=='WS') F.station=''}
   F.wo=(F.wo||'').trim().toUpperCase(); F.cust=(F.cust||'').trim(); F.modelNo=(F.modelNo||'').trim().toUpperCase();
-  if(kind==='fs'&&NO_CUST_SVC.includes(F.svc)){F.travel='';F.cust='';F.wo='';F.model='';F.modelNo=''}
-  const rec={...F,kind:kind.toUpperCase(),travel:kind==='fs'?(F.travel===''?0:+F.travel):'',
-    station:kind==='ws'?F.station:'',cust:kind==='fs'?F.cust:'',svc:code(F.type)==='FS'?F.svc:''};
+  let items=null;
+  if(kind==='fs'){
+    if(F.mode!==SITE){F.svc=F.mode;F.travel='';F.cust='';F.wo='';F.model='';F.modelNo='';F.fsn=''}
+    else{items=(F.items||[]).filter(i=>i.model||i.modelNo||i.svc||i.hours).map(i=>({model:i.model||'',modelNo:String(i.modelNo||'').trim().toUpperCase(),qty:+i.qty||1,svc:i.svc||'',hours:i.hours===''?'':+i.hours,wo:String(i.wo||'').trim().toUpperCase()}));
+      if(!items.length){msg.className='msg bad';msg.textContent='⚠ 請至少填一台設備';return}
+      F.svc=[...new Set(items.map(i=>i.svc).filter(Boolean))].join('、');F.model=items[0].model;F.modelNo=items[0].modelNo;F.wo=(items.find(i=>i.wo)||{}).wo||''}}
+  const {mode,mates,...F2}=F;
+  const rec={...F2,kind:kind.toUpperCase(),travel:kind==='fs'?(F.travel===''?0:+F.travel):'',
+    station:kind==='ws'?F.station:'',cust:kind==='fs'?F.cust:'',svc:code(F.type)==='FS'?F.svc:'',...(kind==='fs'?{items:items||[],fsn:String(F.fsn||'').trim().toUpperCase()}:{})};
   const err=checkRec(rec);
   if(err){msg.className='msg bad';msg.textContent='⚠ '+err;return}
   const we=woCheck(rec.wo); if(we&&!confirm('⚠ '+we+'\n\n確定這個工單號沒打錯、仍要儲存嗎？')){msg.className='msg bad';msg.textContent='⚠ '+we;return}
-  const warn=overlapWarn(rec);
-  const now=Date.now();
+  const now=Date.now();let warn=overlapWarn(rec);
   if(rec.id){const i=DB.records.findIndex(x=>x.id===rec.id); DB.records[i]={...DB.records[i],...rec,updatedAt:now}}
-  else DB.records.push({...rec,id:uid(),createdAt:now,updatedAt:now});
+  else{const people=[rec.staff,...(kind==='fs'?(F.mates||[]).filter(x=>x!==rec.staff):[])];const grp=people.length>1?uid():'';
+    people.forEach(p=>{const r={...rec,staff:p,id:uid(),createdAt:now,updatedAt:now,...(grp?{grp}:{})};if(p!==rec.staff){const w=overlapWarn(r);if(w)warn=(warn?warn+'；':'')+p+' '+w}DB.records.push(r)});
+    rec._n=people.length}
   persist();
-  msg.className='msg '+(warn?'warn':'ok'); msg.textContent=(rec.id?'✔ 已更新':'✔ 已新增')+`：${rec.staff} ${rec.date} ${fmt1(hoursOf(rec))}h`+(warn?'　'+warn:'');
-  FORM[kind]=blankForm(kind); document.getElementById(kind+'-save').textContent='＋ 新增';
+  msg.className='msg '+(warn?'warn':'ok'); msg.textContent=(rec.id?'✔ 已更新':'✔ 已新增')+`：${rec._n>1?rec._n+' 人（'+[rec.staff,...F.mates].join('、')+'）':rec.staff} ${rec.date} ${fmt1(hoursOf(rec))}h`+(warn?'　'+warn:'');
+  FORM[kind]=blankForm(kind); document.getElementById(kind+'-save').textContent='＋ 新增'; {const ob=document.getElementById('fsBanner');if(ob&&kind==='fs')ob.remove()}
   document.getElementById(kind+'-cancel').style.display='none';
   paintChips(kind); renderAll(); if(formUrl()) uploadClick(); else autoSync();
 }
 function editRec(kind,id){
   const r=DB.records.find(x=>x.id===id); if(!r) return;
   FORM[kind]={...blankForm(kind),...r,travel:r.travel===''||r.travel==null?'':String(r.travel)};
+  if(kind==='fs'){const F=FORM.fs;F.mates=[];F.mode=NO_CUST_SVC.includes(r.svc)?r.svc:SITE;F.items=F.mode===SITE?JSON.parse(JSON.stringify(itemsOf(r))).map(i=>({...i,hours:i.hours===''?'':String(i.hours)})):[];if(F.mode===SITE&&!F.items.length)F.items=[blankItem()]}
   matchShift(kind);
   document.getElementById(kind+'-save').textContent='💾 更新';
   document.getElementById(kind+'-cancel').style.display='';
@@ -544,13 +618,13 @@ function delRec(id){
   if(!confirm(`刪除這筆？\n${r.date} ${r.staff} ${r.start}–${r.end} ${r.type}`)) return;
   r.deleted=true; r.updatedAt=Date.now(); persist(); renderAll(); if(formUrl()) uploadClick(); else autoSync();
 }
-const mdl=r=>[r.model,r.modelNo].filter(Boolean).map(esc).join(' ')||'<span class="hint">-</span>';
+const mdl=r=>{if(Array.isArray(r.items)&&r.items.length)return r.items.map(i=>esc([i.modelNo||i.model,i.qty>1?'×'+i.qty:''].join(''))+` <span class="hint">${esc(i.svc)} ${i.hours}h</span>`).join('<br>');return [r.model,r.modelNo].filter(Boolean).map(esc).join(' ')||'<span class="hint">-</span>'};
 function tagHTML(t){const c=code(t);return `<span class="tag" style="background:${TYPE_COLOR[c]||'#546E7A'}">${esc(c)}</span>`}
 function renderList(kind){
   const K=kind.toUpperCase(), g=id=>document.getElementById(kind+'-'+id).value;
   const f1=g('f1'),f2=g('f2'),fp=g('fp'),fq=g('fq').trim().toLowerCase(),fe=document.getElementById(kind+'-fe').checked;
   let rows=live().filter(r=>r.kind===K&&(!f1||r.date>=f1)&&(!f2||r.date<=f2)&&(!fp||r.staff===fp)
-    &&(!fq||[r.wo,r.cust,r.note,r.station,r.model,r.modelNo].join(' ').toLowerCase().includes(fq))&&(!fe||checkRec(r)));
+    &&(!fq||[r.wo,r.cust,r.note,r.station,r.model,r.modelNo,r.fsn,...(r.items||[]).flatMap(i=>[i.model,i.modelNo,i.wo])].join(' ').toLowerCase().includes(fq))&&(!fe||checkRec(r)));
   rows.sort((a,b)=>(b.date+b.start).localeCompare(a.date+a.start)||a.staff.localeCompare(b.staff));
   const isWS=kind==='ws';
   const head=`<tr><th>日期</th><th>人員</th><th>類型</th><th>時間</th>${isWS?'<th>工單號</th><th>機種／型號</th><th>站別</th>':'<th>客戶</th><th>服務項目</th><th class="n">交通</th><th class="n">現場</th><th>工單號</th><th>機種／型號</th>'}<th class="n">工時</th><th>備註</th><th></th></tr>`;
@@ -559,7 +633,7 @@ function renderList(kind){
   const body=rows.map(r=>{const h=hoursOf(r),e=checkRec(r);tot+=h;
     return `<tr><td>${r.date.slice(5).replace('-','/')}</td><td>${esc(r.staff)}</td><td>${tagHTML(r.type)}${esc(r.type.split(' ').slice(1).join(' '))}</td>
     <td>${r.start}–${r.end}${r.shift?` <span class="hint">${esc(r.shift)}</span>`:''}</td>
-    ${isWS?`<td>${esc(r.wo)}</td><td>${mdl(r)}</td><td>${esc(r.station)}</td>`:`<td>${esc(r.cust)}</td><td>${esc(r.svc||'')}</td><td class="n">${r.travel||'-'}</td><td class="n">${fmt1(h-(+r.travel||0))}</td><td>${esc(r.wo)}</td><td>${mdl(r)}</td>`}
+    ${isWS?`<td>${esc(r.wo)}</td><td>${mdl(r)}</td><td>${esc(r.station)}</td>`:`<td>${esc(r.cust)}${r.fsn?`<div class="hint">${esc(r.fsn)}</div>`:''}</td><td>${esc(r.svc||'')}</td><td class="n">${r.travel||'-'}</td><td class="n">${fmt1(h-(+r.travel||0))}</td><td>${esc([...new Set([r.wo,...(r.items||[]).map(i=>i.wo)].filter(Boolean))].join(' '))}</td><td>${mdl(r)}</td>`}
     <td class="n"><b>${fmt1(h)}</b></td><td>${esc(r.note)}${e?` <span class="bad-cell">⚠ ${esc(e)}</span>`:''}</td>
     <td style="white-space:nowrap"><button class="ib" title="編輯" onclick="editRec('${kind}','${r.id}')">✎</button><button class="ib del" title="刪除" onclick="delRec('${r.id}')">✕</button></td></tr>`}).join('');
   document.getElementById(kind+'-tbl').innerHTML=head+body;
@@ -592,17 +666,17 @@ function renderBoard(){
 // ═══ 月報 ═══
 function monthRecs(){const m=document.getElementById('rMonth').value;return live().filter(r=>r.date.slice(0,7)===m)}
 function renderReport(){
-  const recs=monthRecs(), codes=M().types.map(code);
-  const H=r=>hoursOf(r);
+  const raw=monthRecs(), recs=explode(raw), codes=M().types.map(code);
+  const H=r=>HRS(r);
   const sum=a=>a.reduce((t,r)=>t+H(r),0);
-  const ws=recs.filter(r=>r.kind==='WS'),fs=recs.filter(r=>r.kind==='FS'),bad=recs.filter(checkRec);
+  const ws=recs.filter(r=>r.kind==='WS'),fs=recs.filter(r=>r.kind==='FS'),bad=raw.filter(checkRec);
   const travel=fs.reduce((t,r)=>t+(+r.travel||0),0);
   let h=`<div class="kpig">
     <div class="kc"><div class="kv cb">${fmt1(sum(recs))}</div><div class="kl">總工時 h</div></div>
     <div class="kc"><div class="kv">${fmt1(sum(ws))}</div><div class="kl">廠內工時 h</div></div>
     <div class="kc"><div class="kv cg">${fmt1(sum(fs))}</div><div class="kl">廠外工時 h</div></div>
     <div class="kc"><div class="kv co">${fmt1(travel)}</div><div class="kl">其中交通 h</div></div>
-    <div class="kc"><div class="kv">${recs.length}</div><div class="kl">報工筆數</div></div>
+    <div class="kc"><div class="kv">${raw.length}</div><div class="kl">報工筆數</div></div>
     <div class="kc"><div class="kv ${bad.length?'cr':''}">${bad.length}</div><div class="kl">待修正</div></div></div>`;
   // 人員 × 類型
   h+=`<h3 style="font-size:13px;margin:6px 0">① 人員 × 工作類型（小時）</h3><div class="tw"><table class="dt"><tr><th>人員</th>${codes.map(c=>`<th class="n">${esc(c)}</th>`).join('')}<th class="n">合計</th></tr>`;
@@ -614,7 +688,7 @@ function renderReport(){
   h+=`<tr class="tot"><td>合計</td>${colT.map(v=>`<td class="n">${fmt1(v)}</td>`).join('')}<td class="n">${fmt1(colT.reduce((a,b)=>a+b,0))}</td></tr></table></div>`;
   // 工單
   // 工單 → 機種（同一工單任何一筆有填就沿用，查全部歷史）
-  const woM={};live().filter(r=>r.wo&&(r.model||r.modelNo)).sort((x,y)=>x.updatedAt-y.updatedAt).forEach(r=>{woM[r.wo]={model:r.model||(woM[r.wo]||{}).model||'',modelNo:r.modelNo||(woM[r.wo]||{}).modelNo||''}});
+  const woM={};explode(live()).filter(r=>r.wo&&(r.model||r.modelNo)).sort((x,y)=>x.updatedAt-y.updatedAt).forEach(r=>{woM[r.wo]={model:r.model||(woM[r.wo]||{}).model||'',modelNo:r.modelNo||(woM[r.wo]||{}).modelNo||''}});
   const mOf=r=>r.model||(woM[r.wo]||{}).model||'', mnOf=r=>r.modelNo||(woM[r.wo]||{}).modelNo||'';
   const wos={};recs.filter(r=>r.wo).forEach(r=>{(wos[r.wo]=wos[r.wo]||[]).push(r)});
   const st=M().stations, nf=v=>v?fmt1(v):'-';
@@ -643,7 +717,7 @@ function renderReport(){
   const SV=M().services, fsc=recs.filter(r=>code(r.type)==='FS');
   const cs={};fs.forEach(r=>{const k=r.cust||(NO_CUST_SVC.includes(r.svc)?`（${r.svc}）`:'(未填)');(cs[k]=cs[k]||[]).push(r)});
   h+=`<h3 style="font-size:13px;margin:16px 0 6px">④ 廠外客戶別</h3><div class="tw"><table class="dt"><tr><th>客戶</th><th class="n">人次</th>${SV.map(v=>`<th class="n">${esc(v)} h</th>`).join('')}<th class="n">其他 h</th><th class="n">現場 h</th><th class="n">交通 h</th><th class="n">合計 h</th><th class="n">平均每人次 h</th></tr>`;
-  const cRows=Object.entries(cs).map(([c,rs])=>{const t=sum(rs),tr=rs.reduce((a,r)=>a+(+r.travel||0),0);return {c,rs,n:rs.length,t,tr}}).sort((a,b)=>b.t-a.t);
+  const cRows=Object.entries(cs).map(([c,rs])=>{const t=sum(rs),tr=rs.reduce((a,r)=>a+(+r.travel||0),0);return {c,rs,n:new Set(rs.map(r=>r.id)).size,t,tr}}).sort((a,b)=>b.t-a.t);
   if(!cRows.length) h+=`<tr><td colspan="${SV.length+8}" class="empty">本月沒有廠外紀錄</td></tr>`;
   cRows.forEach(x=>h+=`<tr><td>${esc(x.c)}</td><td class="n">${x.n}</td>${SV.map(v=>`<td class="n">${nf(sum(x.rs.filter(r=>r.svc===v)))}</td>`).join('')}<td class="n">${nf(sum(x.rs.filter(r=>!SV.includes(r.svc))))}</td>
     <td class="n">${fmt1(x.t-x.tr)}</td><td class="n">${fmt1(x.tr)}</td><td class="n"><b>${fmt1(x.t)}</b></td><td class="n">${fmt1(x.t/x.n)}</td></tr>`);
@@ -657,16 +731,16 @@ function renderReport(){
   if(!sKeys.length) h+=`<tr><td colspan="7" class="empty">本月沒有客戶現場服務紀錄</td></tr>`;
   sKeys.forEach(v=>{h+=sRow('<b>'+esc(v)+'</b>',Object.values(sg[v]).flat(),'tot',false);
     Object.keys(sg[v]).sort().forEach(m=>h+=sRow(esc(m),sg[v][m],'',true))});
-  h+=`</table></div><div class="hint" style="margin-top:4px">人次 = 報工筆數；兩人同行做同一件工作會算 2 人次。</div>`;
+  h+=`</table></div><div class="hint" style="margin-top:4px">人次 = 報工筆數；兩人同行做同一件工作會算 2 人次。一次做多台時，每台各算 1 人次，工時用各台自己填的工時，交通依工時比例分攤。</div>`;
   if(bad.length) h+=`<div class="box r" style="margin-top:14px"><b>待修正 ${bad.length} 筆</b><p>${bad.map(r=>`${r.date} ${esc(r.staff)} ${r.start}–${r.end}：${esc(checkRec(r))}`).join('<br>')}</p></div>`;
   document.getElementById('rBody').innerHTML=h;
 }
 function exportCSV(scope){
-  const rs=(scope==='month'?monthRecs():live()).slice().sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
-  const cols=['區分','日期','人員','類型代碼','工作類型','時段','開始','結束','總工時h','交通h','現場h','工單號','機種','型號','站別','客戶','服務項目','備註','檢查'];
+  const rs=explode((scope==='month'?monthRecs():live()).slice().sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)));
+  const cols=['區分','日期','人員','類型代碼','工作類型','時段','開始','結束','總工時h','交通h','現場h','工單號','機種','型號','台數','站別','客戶','服務項目','FSN','備註','檢查'];
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  const lines=[cols.join(',')].concat(rs.map(r=>{const h=hoursOf(r),t=+r.travel||0;
-    return [r.kind==='WS'?'廠內':'廠外',r.date,r.staff,code(r.type),r.type,r.shift,r.start,r.end,h,r.kind==='FS'?t:'',r.kind==='FS'?Math.round((h-t)*10)/10:'',r.wo,r.model,r.modelNo,r.station,r.cust,r.svc,r.note,checkRec(r)||'OK'].map(q).join(',')}));
+  const lines=[cols.join(',')].concat(rs.map(r=>{const h=Math.round(HRS(r)*100)/100,t=+r.travel||0;
+    return [r.kind==='WS'?'廠內':'廠外',r.date,r.staff,code(r.type),r.type,r.shift,r.start,r.end,h,r.kind==='FS'?t:'',r.kind==='FS'?Math.round((h-t)*100)/100:'',r.wo,r.model,r.modelNo,r._qty||'',r.station,r.cust,r.svc,r.fsn||'',r.note,checkRec(DB.records.find(x=>x.id===r.id)||r)||'OK'].map(q).join(',')}));
   download('﻿'+lines.join('\r\n'),`報工_${scope==='month'?document.getElementById('rMonth').value:'全部'}.csv`,'text/csv;charset=utf-8');
 }
 function download(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
@@ -1148,6 +1222,27 @@ function loadSample(){
   persist(); renderAll(true); closeAdmin(); autoSync();
 }
 
+// ═══ 從訊息單案件系統「派工連結」帶入廠外報工 ═══
+async function applyFsLink(code){
+  let d;try{d=await unpackText(code)}catch(e){alert('報工連結無法讀取，請確認連結完整（從派工訊息整段複製）');return}
+  if(!d||d.app!=='fs-sig'){alert('這不是訊息單的報工連結');return}
+  if(!M().staff.length){alert('這台裝置還沒設定報工系統，請先用主任給的「設定連結」完成設定，再點一次報工連結');return}
+  const t=today(),date=(d.d&&d.d2&&d.d<=t&&t<=d.d2)?t:(d.d||t);
+  const st=(d.st||[]).filter(x=>M().staff.includes(x)),me=myName();
+  const staff=me||st[0]||'';
+  const mm=v=>{const k=String(v||'').toLowerCase();return M().models.find(m=>m.toLowerCase()===k)||v||''};
+  FORM.fs={...blankForm('fs'),date,staff,mates:st.filter(x=>x!==staff),start:d.t1||'',end:d.t2||'',cust:d.c||'',travel:d.tr!=null&&d.tr!==''?String(d.tr):'',fsn:d.fsn||'',note:d.no||'',mode:SITE,
+    items:(d.it||[]).map(i=>({model:mm(i.m),modelNo:i.n||'',qty:+i.q||1,svc:siteSvcs().includes(i.s)?i.s:'',hours:'',wo:''}))};
+  if(!FORM.fs.items.length)FORM.fs.items=[blankItem()];
+  matchShift('fs');showTab('fs');paintChips('fs');
+  const msg=document.getElementById('fs-msg');msg.className='msg ok';
+  msg.textContent=`✔ 已從訊息單 ${d.fsn||''} 帶入。請確認時間、同行人員，並填各台工時後按「＋ 新增」`;
+  const ob=document.getElementById('fsBanner');if(ob)ob.remove();
+  document.querySelector('#p-fs .card-bd').insertAdjacentHTML('afterbegin',`<div class="fsbanner" id="fsBanner">📋 已從訊息單 <b>${esc(d.fsn||'')}</b>（${esc(d.c||'')}）帶入；${st.length>1?'同行人員已勾選，存檔時每人各存一筆；':''}各台工時要自己填，合計要等於現場工時。</div>`);
+  if(me&&st.length&&!st.includes(me))alert(`提醒：這張單排的是 ${st.join('、')}，你目前的身分是 ${me}。`);
+  window.scrollTo({top:0});
+}
+
 // ═══ 共用 ═══
 function showTab(p){document.querySelectorAll('.tab[data-p]').forEach(t=>t.classList.toggle('active',t.dataset.p===p));
   document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='p-'+p));
@@ -1166,6 +1261,7 @@ document.getElementById('rMonth').value=today().slice(0,7);
 renderAll(true); applyRole();
 (async()=>{
   if(location.hash.startsWith('#cfg=')){const h=location.hash; history.replaceState(null,'',location.pathname+location.search); await applyCfgText(h,true)}
+  else if(location.hash.startsWith('#fs=')){const h=location.hash; history.replaceState(null,'',location.pathname+location.search); await applyFsLink(decodeURIComponent(h.slice(4)))}
   else if(!M().staff.length){const h=await IDB.get('file').catch(()=>null); if(!h) showWizard('home')}
 })();
 if(formUrl()){updUpBtn()}

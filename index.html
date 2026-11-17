@@ -97,6 +97,7 @@ table.dt tr.tot td{font-weight:700;background:var(--grey4)}
 .mtabs{display:flex;gap:4px;padding:10px 16px 0;border-bottom:1px solid var(--border)}
 .mtab{border:none;background:none;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--grey2);cursor:pointer;border-bottom:2px solid transparent}
 .mtab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.admcard .mtabs{padding:8px 14px 0;flex-wrap:wrap}.admcard .mtab{font-size:14px;padding:9px 16px}.admcard .mp{padding:16px 18px}
 .mp{display:none;padding:16px 18px}.mp.on{display:block}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .mgrid label{font-size:12px;font-weight:700;color:var(--grey2);display:block;margin-bottom:4px}
@@ -137,7 +138,7 @@ body.station .notstation{display:none!important}
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.4<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.5<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
   <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="whoBtn" style="display:none;background:rgba(255,255,255,.15)" onclick="whoDlg()" title="切換身分"></button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
@@ -145,7 +146,7 @@ body.station .notstation{display:none!important}
   <button class="tab" data-p="fs" onclick="showTab('fs')">🚐 廠外報工</button>
   <button class="tab" data-p="board" onclick="showTab('board')">📺 今日看板</button>
   <button class="tab" data-p="rpt" onclick="showTab('rpt')">📊 月報</button>
-  <button class="tab adm" onclick="openAdmin()">⚙ 主檔與同步</button>
+  <button class="tab adm" data-p="adm" onclick="openAdmin()">⚙ 設定</button>
 </div>
 
 <div class="main">
@@ -170,30 +171,34 @@ body.station .notstation{display:none!important}
       <button class="btn btn-o btn-s" onclick="exportCSV('all')">⬇ 匯出全部 CSV</button>
     </div><div class="card-bd" id="rBody"></div></div>
   </div>
-</div>
-
-<!-- ADMIN -->
-<div class="mbg" id="adm">
- <div class="modal">
-  <div class="mhd"><h3>⚙ 主檔與同步 <span style="font-size:12px;opacity:.8;font-weight:400">程式版本 V2.4</span></h3><button class="ib" style="color:#fff;font-size:18px" onclick="closeAdmin()">✕</button></div>
+  <div class="panel" id="p-adm">
+ <div class="card admcard">
+  <div class="card-hd"><h2>⚙ 設定</h2><span class="hint">程式版本 V2.5</span></div>
   <div class="mtabs">
-    <button class="mtab on" data-m="list" onclick="mTab('list')">清單</button>
+    <button class="mtab on" data-m="shared" onclick="mTab('shared')">人員／客戶／機種／站別</button>
+    <button class="mtab" data-m="list" onclick="mTab('list')">清單</button>
     <button class="mtab" data-m="time" onclick="mTab('time')">時段</button>
     <button class="mtab" data-m="sync" onclick="mTab('sync')">同步共用檔</button>
     <button class="mtab" data-m="data" onclick="mTab('data')">資料備份</button>
     <button class="mtab" data-m="perm" onclick="mTab('perm')">權限</button>
   </div>
-  <div class="mp on" id="m-list">
+  <div class="mp" id="m-list">
     <div class="hint" style="margin-bottom:10px">每行一個項目，順序就是畫面上的順序。工作類型格式為「代碼 名稱」，WS（工單維修）和 FS（客戶現場服務）兩個代碼請保留。
       <button class="btn btn-o btn-s" style="margin-left:6px" onclick="fillFromRecords()">↺ 從報工紀錄帶入人員／客戶／機種</button></div>
     <div class="mgrid">
-      <div><label id="mStaffL">人員</label><textarea class="ta" id="mStaff"></textarea></div>
       <div><label>工作類型</label><textarea class="ta" id="mType"></textarea></div>
-      <div><label id="mStationL">站別（廠內）</label><textarea class="ta" id="mStation"></textarea></div>
-      <div><label id="mCustL">客戶（廠外）</label><textarea class="ta" id="mCust"></textarea></div>
-      <div><label id="mModelL">機種</label><textarea class="ta" id="mModel"></textarea></div>
       <div><label>服務項目（客戶現場服務 FS）</label><textarea class="ta" id="mSvc"></textarea></div>
     </div>
+  </div>
+  <div class="mp on" id="m-shared">
+    <div class="hint" id="shLockNote" style="margin-bottom:10px">每行一個項目，順序就是畫面上的順序。</div>
+    <div class="mgrid">
+      <div><label id="mStaffL">人員</label><textarea class="ta" id="mStaff"></textarea></div>
+      <div><label id="mCustL">客戶（廠外）</label><textarea class="ta" id="mCust"></textarea></div>
+      <div><label id="mModelL">機種</label><textarea class="ta" id="mModel"></textarea></div>
+      <div><label id="mStationL">站別（廠內）</label><textarea class="ta" id="mStation"></textarea></div>
+    </div>
+    <div class="hint" id="shWho" style="margin-top:12px;line-height:1.8"></div>
   </div>
   <div class="mp" id="m-time">
     <div class="hint" style="margin-bottom:10px">點選時段按鈕會自動帶入這裡的時間；報工時間跨到休息時間會自動扣除。名稱可以改，可新增或刪除（「上午」「下午」用於今日看板，建議保留）。</div>
@@ -276,8 +281,9 @@ body.station .notstation{display:none!important}
       <p>設定後，所有裝置（報工電腦、手機）打開 ⚙ 都要輸入密碼，避免清單被誤改。密碼會隨共用檔和設定連結同步到各裝置。<b>請記下密碼</b>，忘記時無法自行找回。</p></div>
     <div class="hint" id="dataInfo"></div>
   </div>
-  <div class="mft"><button class="btn btn-o" onclick="closeAdmin()">取消</button><button class="btn btn-p" onclick="saveAdmin()">💾 儲存主檔</button></div>
+  <div class="mft"><span id="admMsg" class="hint" style="margin-right:auto;align-self:center"></span><button class="btn btn-o" onclick="openAdminReal()">↺ 還原未儲存的修改</button><button class="btn btn-p" onclick="saveAdmin()">💾 儲存</button></div>
  </div>
+</div>
 </div>
 
 <div class="mbg" id="wiz"><div class="modal" style="width:min(520px,100%)">
@@ -886,6 +892,8 @@ async function showFileName(){const h=await IDB.get('file').catch(()=>null);cons
   const lockTa=(id,on)=>{const t=document.getElementById(id);if(t){t.disabled=!!on;t.style.background=on?'#eceeea':''}};
   lockTa('mModel',shh&&SHMAN.models!==false);lockTa('mStation',shh&&SHMAN.stations);lockTa('mStaff',shh&&SHMAN.staff);lockTa('mCust',shh&&SHMAN.customers);
   const stl=document.getElementById('mStaffL');if(stl)stl.textContent=shh&&SHMAN.staff?'人員（🔒 共用設定）':'人員';
+  const sln=document.getElementById('shLockNote');if(sln)sln.innerHTML=shh?'🔒 灰色欄位由入口網站「共用設定」統一維護，這裡只能查看；要修改請到入口網站 → 共用設定，存檔後中繼約 5 分鐘複製過來，再按「🔄 同步」。':'每行一個項目，順序就是畫面上的順序。到「同步共用檔」頁選好共用設定後，這裡會改用入口網站的清單（鎖住）。';
+  const shw=document.getElementById('shWho');if(shw){const L=repPeople();shw.innerHTML=L.length?'<b>可登入的人：</b>工程師 '+(L.filter(p=>roleOfP(p)==='eng').map(p=>esc(p.name)+(p.pin?'':'（未設 PIN）')).join('、')||'—')+'；主任 '+(L.filter(p=>roleOfP(p)==='chief').map(p=>esc(p.name)).join('、')||'—'):''}
   const ctl=document.getElementById('mCustL');if(ctl)ctl.textContent=shh&&SHMAN.customers?'客戶（🔒 共用設定）':'客戶（廠外）';
   const sl=document.getElementById('mStationL');if(sl)sl.textContent=shh&&SHMAN.stations?'站別（🔒 共用設定）':'站別（廠內）';
   const tsh=document.getElementById('mTimeSh');if(tsh)tsh.style.display=shh&&(SHMAN.shifts||SHMAN.breaks)?'':'none';
@@ -1330,7 +1338,7 @@ function whoDlg(){const L=repPeople(),grp=r=>L.filter(p=>roleOfP(p)===r);
 function afterWho(){paintWho();applyPerm();const me=curName();if(me)['ws','fs'].forEach(k=>{if(FORM[k]&&!FORM[k].id){FORM[k].staff=me;paintChips(k)}})}
 function applyPerm(){const rt=document.querySelector('.tab[data-p="rpt"]');if(rt)rt.style.display=can('rpt.view')?'':'none';
   if(!can('rpt.view')&&document.getElementById('p-rpt').classList.contains('active'))showTab('ws');paintWho()}
-const ADM_TABS=[['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['perm','set.perm']];
+const ADM_TABS=[['shared','set.list'],['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['perm','set.perm']];
 function admTabs(){return ADM_TABS.filter(t=>can(t[1])).map(t=>t[0])}
 function renderPerm(){const t=document.getElementById('permTbl');if(!t)return;const pm=M().perms||{};
   document.getElementById('permNote').innerHTML=authOn()?'':'<b>共用設定還沒有人員名單（或這台還沒讀到），登入功能尚未啟用；目前只有「管理者」（管理密碼）與「其他」兩種身分。</b>';
@@ -1353,10 +1361,10 @@ function openAdminReal(){
   showFileName(); renderPerm();
   const ok=admTabs();document.querySelectorAll('.mtab').forEach(b=>b.style.display=ok.includes(b.dataset.m)?'':'none');
   const cur=(document.querySelector('.mtab.on')||{}).dataset;mTab(cur&&ok.includes(cur.m)?cur.m:ok[0]);
-  document.querySelector('#adm .mft .btn-p').style.display=(ok.includes('list')||ok.includes('time'))?'':'none';
-  document.getElementById('adm').classList.add('on');
+  document.querySelector('#p-adm .mft').style.display=(ok.includes('list')||ok.includes('time'))?'':'none';
+  showTab('adm');
 }
-function closeAdmin(){document.getElementById('adm').classList.remove('on')}
+function closeAdmin(){const p=document.getElementById('p-adm');if(p&&p.classList.contains('active'))showTab('ws')}
 function mTab(t){document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('on',b.dataset.m===t));
   document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.id==='m-'+t))}
 function saveAdmin(){
@@ -1370,7 +1378,8 @@ function saveAdmin(){
   const breaks=readTRows('tBreak','休息'); if(!breaks) return;
   const ch={};if(can('set.list'))Object.assign(ch,{staff,types,stations,customers,models,services});if(can('set.time'))Object.assign(ch,{shifts,breaks});
   setMaster(ch);
-  closeAdmin(); renderAll(true); autoSync();
+  renderAll(true); autoSync(); openAdminReal();
+  const am=document.getElementById('admMsg');if(am){am.textContent='✔ 已儲存 '+new Date().toLocaleTimeString('zh-TW',{hour12:false});setTimeout(()=>{if(am)am.textContent=''},4000)}
 }
 function trRow(n,a,b){return `<tr><td><input class="inp" style="width:110px" value="${esc(n)}"></td><td><input class="inp t" value="${esc(a)}"></td><td>–</td><td><input class="inp t" value="${esc(b)}"></td><td><button class="ib" title="刪除" onclick="this.closest('tr').remove()">✕</button></td></tr>`}
 function fillTRows(id,obj){document.getElementById(id).innerHTML='<tr><th>名稱</th><th>開始</th><th></th><th>結束</th><th></th></tr>'+Object.entries(obj||{}).map(([n,[a,b]])=>trRow(n,a,b)).join('')}

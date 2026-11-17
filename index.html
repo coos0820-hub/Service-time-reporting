@@ -137,8 +137,8 @@ body.station .notstation{display:none!important}
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.3<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
-  <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.4<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="whoBtn" style="display:none;background:rgba(255,255,255,.15)" onclick="whoDlg()" title="切換身分"></button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
   <button class="tab active" data-p="ws" onclick="showTab('ws')">🔧 廠內／其他</button>
@@ -175,21 +175,22 @@ body.station .notstation{display:none!important}
 <!-- ADMIN -->
 <div class="mbg" id="adm">
  <div class="modal">
-  <div class="mhd"><h3>⚙ 主檔與同步</h3><button class="ib" style="color:#fff;font-size:18px" onclick="closeAdmin()">✕</button></div>
+  <div class="mhd"><h3>⚙ 主檔與同步 <span style="font-size:12px;opacity:.8;font-weight:400">程式版本 V2.4</span></h3><button class="ib" style="color:#fff;font-size:18px" onclick="closeAdmin()">✕</button></div>
   <div class="mtabs">
     <button class="mtab on" data-m="list" onclick="mTab('list')">清單</button>
     <button class="mtab" data-m="time" onclick="mTab('time')">時段</button>
     <button class="mtab" data-m="sync" onclick="mTab('sync')">同步共用檔</button>
     <button class="mtab" data-m="data" onclick="mTab('data')">資料備份</button>
+    <button class="mtab" data-m="perm" onclick="mTab('perm')">權限</button>
   </div>
   <div class="mp on" id="m-list">
     <div class="hint" style="margin-bottom:10px">每行一個項目，順序就是畫面上的順序。工作類型格式為「代碼 名稱」，WS（工單維修）和 FS（客戶現場服務）兩個代碼請保留。
       <button class="btn btn-o btn-s" style="margin-left:6px" onclick="fillFromRecords()">↺ 從報工紀錄帶入人員／客戶／機種</button></div>
     <div class="mgrid">
-      <div><label>人員</label><textarea class="ta" id="mStaff"></textarea></div>
+      <div><label id="mStaffL">人員</label><textarea class="ta" id="mStaff"></textarea></div>
       <div><label>工作類型</label><textarea class="ta" id="mType"></textarea></div>
       <div><label id="mStationL">站別（廠內）</label><textarea class="ta" id="mStation"></textarea></div>
-      <div><label>客戶（廠外）</label><textarea class="ta" id="mCust"></textarea></div>
+      <div><label id="mCustL">客戶（廠外）</label><textarea class="ta" id="mCust"></textarea></div>
       <div><label id="mModelL">機種</label><textarea class="ta" id="mModel"></textarea></div>
       <div><label>服務項目（客戶現場服務 FS）</label><textarea class="ta" id="mSvc"></textarea></div>
     </div>
@@ -220,7 +221,7 @@ body.station .notstation{display:none!important}
     <div class="box notstation" style="border-color:#E65100;background:#FFF3E0"><b>🔗 共用設定（入口網站管理）：</b><span id="shSetName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickShSet()">📂 選擇共用設定檔</button><button class="btn btn-o btn-s" onclick="syncNow(true)">🔄 立即套用</button><button class="btn btn-o btn-s" onclick="forgetShSet()">取消設定</button></div>
       <p>選 NAS「共用設定」資料夾裡的 <b>共用設定.json</b>。設定後每次同步會讀取共用設定，把<b>機種清單</b>、<b>WO 工單號格式</b>，以及入口網站有填的<b>站別、時段、休息</b>帶進主檔，再隨共用檔和手機設定連結傳到其他裝置。只需要一台電腦設定（建議你的電腦）。<br>
-      設定後，機種請到入口網站的「共用設定」修改；在這裡的「清單 → 機種」改的內容，下次同步會被共用設定蓋掉。</p></div>
+      設定後，人員、客戶、機種、站別、時段由入口網站的「共用設定」修改，這裡的清單會鎖住（🔒）。選 S:\\10_報工\\_共用設定.json（中繼自動複製）或 01_共用設定\\共用設定.json 都可以。</p></div>
     <div class="box notstation" style="border-color:#8e44ad;background:#F5EEF8"><b>📅 Repair Shop 排程檔：</b><span id="rsPlanName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickRsPlan()">📂 選擇 rs_kiosk.json</button><button class="btn btn-o btn-s" onclick="forgetRsPlan()">取消設定</button></div>
       <p>選 Repair Shop 資料夾裡的 <b>rs_kiosk.json</b>（看板主機：C:\SvcShare\50_RepairShop）。同步時會把未來 10 天的排程帶進主檔，手機和其他電腦同步後，「工單號」下方就會列出今天排給該人員的工單，點一下就帶入工單、站別、型號。只需要一台會同步的電腦設定。</p></div>
@@ -255,6 +256,10 @@ body.station .notstation{display:none!important}
     <div class="box y notstation"><b>OneDrive 衝突副本（共用檔放在 SharePoint 時才會發生）</b>
       <p>兩台電腦幾乎同時同步時，OneDrive 可能另存一份「報工_shared-電腦名稱.json」。用「資料備份 → 合併匯入 JSON」把那個副本匯入，再按同步，然後刪掉副本即可，資料不會遺失。</p></div>
   </div>
+  <div class="mp" id="m-perm"><div class="hint" style="margin-bottom:8px">各身分能做什麼；設定隨主檔同步到所有電腦與手機。預設值＝原本的做法（報工、看月報不用登入；主檔與同步只有管理者）。「權限」頁固定只有管理者能改。</div>
+    <div class="hint" id="permNote" style="margin-bottom:8px"></div>
+    <div style="overflow:auto"><table class="dt" id="permTbl"></table></div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-o btn-s" onclick="permDefault()">恢復預設值</button><button class="btn btn-b btn-s" onclick="permSave()">💾 儲存權限</button></div></div>
   <div class="mp" id="m-data">
     <div class="row" style="margin-bottom:12px">
       <button class="btn btn-b btn-s" onclick="downloadJSON()">⬇ 下載備份 JSON</button>
@@ -293,6 +298,10 @@ body.station .notstation{display:none!important}
     <div class="hint" style="margin-top:8px;text-align:left">用手機相機掃描 → 點出現的連結 → 在瀏覽器（Safari／Chrome）開啟就完成設定。<br>
     QR Code 和設定連結一樣是「鑰匙」，只給公司同仁；印出來請貼在只有內部人員進得去的地方，建議至少 8 公分見方。主檔改了要重新產生。</div></div>
   <div class="mft"><button class="btn btn-o" onclick="dlQR()">⬇ 下載圖片</button><button class="btn btn-o" onclick="printQR()">🖨 列印</button><button class="btn btn-p" onclick="document.getElementById('qrDlg').classList.remove('on')">關閉</button></div></div></div>
+<div class="mbg" id="whoDlgBg"><div class="modal" style="width:min(520px,100%)">
+  <div class="mhd"><h3>👤 選擇身分</h3><button class="ib" style="color:#fff;font-size:18px" onclick="whoClose()">✕</button></div>
+  <div style="padding:16px 18px" id="whoBody"></div>
+  <div class="mft"><button class="btn btn-o" onclick="whoClose()">取消</button></div></div></div>
 <div class="mbg" id="meDlg"><div class="modal" style="width:min(460px,100%)">
   <div class="mhd"><h3>👤 我是誰？</h3></div>
   <div style="padding:16px 18px"><div class="hint" style="margin-bottom:10px">選一次就好，之後報工會自動帶入你的名字（仍可改選）。</div>
@@ -337,13 +346,15 @@ function fixMaster(m){if(!Array.isArray(m.models))m.models=[...DEFAULT_MASTER.mo
   if(!m.woFmt||typeof m.woFmt!=='object') m.woFmt={pattern:'',note:'',example:''};
   if(!Array.isArray(m.mig)) m.mig=[];
   if(!m.rsPlan||!Array.isArray(m.rsPlan.list)) m.rsPlan={at:'',list:[]};
+  if(!Array.isArray(m.people)) m.people=[];
+  if(!m.perms||typeof m.perms!=='object') m.perms={};
   if(!m.mig.includes('v196')){ // 一次性：補「其他」「廠內作業」（之後刪掉不會再加回）
     if(Array.isArray(m.types)&&!m.types.some(t=>String(t).split(' ')[0]==='OTH')) m.types=[...m.types,'OTH 其他'];
     if(Array.isArray(m.services)){const sv=[...m.services]; ['廠內作業','其他'].forEach(x=>{if(!sv.includes(x))sv.push(x)}); m.services=sv}
     m.mig=[...m.mig,'v196']}
   return m}
 // ── 主檔：逐欄位時間戳，合併時各欄位取較新者（避免空白主檔蓋掉人員清單）──
-const MF=['staff','types','stations','customers','services','models','shifts','breaks','formUrl','adminHash','woFmt','rsPlan'];
+const MF=['staff','types','stations','customers','services','models','shifts','breaks','formUrl','adminHash','woFmt','rsPlan','people','perms'];
 const fts=(m,k)=>!m?0:(m.fts&&typeof m.fts==='object')?(+m.fts[k]||0):(m.updatedAt||0);
 function setMaster(ch){const now=Date.now(),m={...M(),fts:{}}; for(const k of MF) m.fts[k]=fts(M(),k);
   for(const k in ch){if(JSON.stringify(m[k]??'')!==JSON.stringify(ch[k]??'')){m[k]=ch[k];m.fts[k]=now}}
@@ -667,6 +678,9 @@ function saveForm(kind){
   let err=checkRec(rec);
   if(!err&&kind==='ws'&&code(rec.type)==='WS'&&!rec.wo){if(!F.noWo)err='工單維修要填工單號（點上面的工單，或真的沒有工單請勾「沒有工單」）';else if(!String(rec.note||'').trim())err='勾了「沒有工單」，請在備註寫明是哪台機器、做什麼'}
   if(err){msg.className='msg bad';msg.textContent='⚠ '+err;return}
+  if(kind==='fs'&&(F.mates||[]).length&&!can('rec.others')){msg.className='msg bad';msg.textContent='⚠ 目前身分不能替同事報工，請取消勾選同行人員';return}
+  if(!mayTouch(rec.staff)){msg.className='msg bad';msg.textContent='⚠ 沒有權限';return}
+  if(rec.id){const o=DB.records.find(x=>x.id===rec.id);if(o&&o.staff!==rec.staff&&!mayTouch(o.staff)){msg.className='msg bad';msg.textContent='⚠ 沒有權限';return}}
   const we=woCheck(rec.wo); if(we&&!confirm('⚠ '+we+'\n\n確定這個工單號沒打錯、仍要儲存嗎？')){msg.className='msg bad';msg.textContent='⚠ '+we;return}
   const now=Date.now();let warn=overlapWarn(rec);
   if(rec.id){const i=DB.records.findIndex(x=>x.id===rec.id); DB.records[i]={...DB.records[i],...rec,updatedAt:now}}
@@ -680,7 +694,7 @@ function saveForm(kind){
   paintChips(kind); renderAll(); if(formUrl()) uploadClick(); else autoSync();
 }
 function editRec(kind,id){
-  const r=DB.records.find(x=>x.id===id); if(!r) return;
+  const r=DB.records.find(x=>x.id===id); if(!r) return; if(!mayTouch(r.staff)) return;
   FORM[kind]={...blankForm(kind),...r,travel:r.travel===''||r.travel==null?'':String(r.travel)};
   if(kind==='fs'){const F=FORM.fs;F.mates=[];F.mode=NO_CUST_SVC.includes(r.svc)?r.svc:SITE;F.items=F.mode===SITE?JSON.parse(JSON.stringify(itemsOf(r))).map(i=>({...i,hours:i.hours===''?'':String(i.hours)})):[];if(F.mode===SITE&&!F.items.length)F.items=[blankItem()]}
   matchShift(kind);
@@ -692,7 +706,7 @@ function editRec(kind,id){
 function cancelEdit(kind){FORM[kind]=blankForm(kind);document.getElementById(kind+'-save').textContent='＋ 新增';
   document.getElementById(kind+'-cancel').style.display='none';paintChips(kind)}
 function delRec(id){
-  const r=DB.records.find(x=>x.id===id); if(!r) return;
+  const r=DB.records.find(x=>x.id===id); if(!r) return; if(!mayTouch(r.staff)) return;
   if(!confirm(`刪除這筆？\n${r.date} ${r.staff} ${r.start}–${r.end} ${r.type}`)) return;
   r.deleted=true; r.updatedAt=Date.now(); persist(); renderAll(); if(formUrl()) uploadClick(); else autoSync();
 }
@@ -814,6 +828,7 @@ function renderReport(){
   document.getElementById('rBody').innerHTML=h;
 }
 function exportCSV(scope){
+  if(!need('export'))return;
   const rs=explode((scope==='month'?monthRecs():live()).slice().sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)));
   const cols=['區分','日期','人員','類型代碼','工作類型','時段','開始','結束','總工時h','交通h','現場h','工單號','機種','型號','台數','站別','客戶','服務項目','FSN','備註','檢查'];
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
@@ -867,8 +882,12 @@ async function showFileName(){const h=await IDB.get('file').catch(()=>null);cons
   const shh=await IDB.get('shset').catch(()=>null);const sse=document.getElementById('shSetName');
   if(sse){let inf={};try{inf=JSON.parse(localStorage.getItem(SHSET_KEY))||{}}catch(e){}
     const wf=M().woFmt||{};sse.textContent=shh?`${shh.name}${inf.read?' · 上次讀取 '+new Date(inf.read).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''} · 機種 ${M().models.length} 個 · WO 格式 ${wf.pattern?'已設定':'未設定'}`:'未設定'}
-  const ml=document.getElementById('mModelL');if(ml)ml.textContent=shh?'機種（由共用設定管理，這裡修改會被覆蓋）':'機種';
-  const sl=document.getElementById('mStationL');if(sl)sl.textContent=shh&&SHMAN.stations?'站別（由共用設定管理，這裡修改會被覆蓋）':'站別（廠內）';
+  const ml=document.getElementById('mModelL');if(ml)ml.textContent=shh?'機種（🔒 共用設定）':'機種';
+  const lockTa=(id,on)=>{const t=document.getElementById(id);if(t){t.disabled=!!on;t.style.background=on?'#eceeea':''}};
+  lockTa('mModel',shh&&SHMAN.models!==false);lockTa('mStation',shh&&SHMAN.stations);lockTa('mStaff',shh&&SHMAN.staff);lockTa('mCust',shh&&SHMAN.customers);
+  const stl=document.getElementById('mStaffL');if(stl)stl.textContent=shh&&SHMAN.staff?'人員（🔒 共用設定）':'人員';
+  const ctl=document.getElementById('mCustL');if(ctl)ctl.textContent=shh&&SHMAN.customers?'客戶（🔒 共用設定）':'客戶（廠外）';
+  const sl=document.getElementById('mStationL');if(sl)sl.textContent=shh&&SHMAN.stations?'站別（🔒 共用設定）':'站別（廠內）';
   const tsh=document.getElementById('mTimeSh');if(tsh)tsh.style.display=shh&&(SHMAN.shifts||SHMAN.breaks)?'':'none';
   const pw=document.getElementById('pwSt');if(pw)pw.textContent=M().adminHash?'✔ 已設定':'（未設定，任何人都能改清單）';
   applyRole()}
@@ -951,7 +970,15 @@ async function applyShSet(interactive,force){
     const okT=o=>o&&typeof o==='object'&&Object.keys(o).length&&Object.values(o).every(v=>Array.isArray(v)&&v.length===2);
     if(okT(j.shifts)&&JSON.stringify(j.shifts)!==JSON.stringify(M().shifts)) ch.shifts=j.shifts;
     if(okT(j.breaks)&&JSON.stringify(j.breaks)!==JSON.stringify(M().breaks)) ch.breaks=j.breaks;
-    SHMAN={stations:!!stn.length,shifts:okT(j.shifts),breaks:okT(j.breaks)};
+    // 人員（FS／Repair Shop 工程師、主任）、客戶、登入名單（PIN）
+    const ppl=Array.isArray(j.people)?j.people.filter(x=>x&&x.name&&x.active!==false):[];
+    const stf=[...new Set(ppl.filter(x=>(x.roles||[]).some(r=>REP_STAFF_ROLES.includes(r))).map(x=>String(x.name).trim()))];
+    if(stf.length&&JSON.stringify(stf)!==JSON.stringify(M().staff)) ch.staff=stf;
+    const cst=Array.isArray(j.customers)?[...new Set(j.customers.map(c=>String(c&&c.name||'').trim()).filter(Boolean))]:[];
+    if(cst.length&&JSON.stringify(cst)!==JSON.stringify(M().customers)) ch.customers=cst;
+    const pl=ppl.map(x=>({name:String(x.name).trim(),roles:(x.roles||[]).filter(r=>typeof r==='string'),pin:x.pin||''}));
+    if(JSON.stringify(pl)!==JSON.stringify(M().people||[])) ch.people=pl;
+    SHMAN={stations:!!stn.length,shifts:okT(j.shifts),breaks:okT(j.breaks),staff:!!stf.length,customers:!!cst.length,models:!!fam.length};
     if(Object.keys(ch).length) setMaster(ch);
     localStorage.setItem(SHSET_KEY,JSON.stringify({name:h.name,at:j.updatedAt||'',read:Date.now()}));
     if(Object.keys(ch).length){FORM.ws&&paintChips('ws');FORM.fs&&paintChips('fs')}
@@ -1260,8 +1287,59 @@ function clearPw(){if(!M().adminHash) return; if(!confirm('移除管理密碼？
 function autoSync(){syncNow(false)}
 setInterval(autoSync,120000);
 
+// ═══ 身分與權限（人員、PIN 來自入口網站共用設定，存在主檔 people） ═══
+const REP_STAFF_ROLES=['eng','rs','chief'];
+const REP_ROLES=[['eng','工程師'],['chief','主任'],['admin','管理者'],['guest','其他（未登入／共用報工電腦）']];
+const REP_PERM=[ // [key, 功能, 說明, 預設：工程師 主任 管理者 其他]
+ ['rec.others','替別人報工、修改／刪除別人的紀錄','不可＝只能報自己的（要先登入或設定「這台裝置的使用者」）','YYYY'],
+ ['rpt.view','查看月報','','YYYY'],
+ ['export','匯出 CSV','','YYYY'],
+ ['set.list','設定：清單','人員、工作類型、站別、客戶、機種、服務項目','NNYN'],
+ ['set.time','設定：時段','','NNYN'],
+ ['set.sync','設定：同步共用檔','共用檔、共用設定、排程檔、設定連結','NNYN'],
+ ['set.data','設定：資料備份','匯出／匯入、清除、管理密碼','NNYN']];
+const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const repPeople=()=>(M().people||[]).filter(p=>p&&p.name&&(p.roles||[]).some(r=>REP_STAFF_ROLES.includes(r)));
+const authOn=()=>repPeople().length>0;
+const roleOfP=p=>(p.roles||[]).includes('chief')?'chief':'eng';
+function curRole(){if(adminOK)return'admin';if(!authOn()&&!M().adminHash)return'admin';return authOn()?(SS.get('rep_role')||'guest'):'guest'}
+function curName(){return (authOn()&&SS.get('rep_me'))||myName()}
+function PV(key){const role=curRole();if(key==='set.perm')return role==='admin'?'Y':'N';const i=REP_ROLES.findIndex(r=>r[0]===role);const p=(M().perms||{})[key];if(p&&p[role])return p[role];const d=REP_PERM.find(x=>x[0]===key);return d?(d[3][i]||'N'):'N'}
+const can=k=>PV(k)==='Y';
+function need(k){if(can(k))return true;alert('目前身分（'+((REP_ROLES.find(r=>r[0]===curRole())||[])[1]||'')+'）沒有這個權限。\n請按右上角 👤 切換身分。');return false}
+function mayTouch(staff){if(can('rec.others'))return true;const me=curName();if(me&&staff===me)return true;alert(me?`目前身分只能報自己的工時（${me}）。`:'目前身分只能報自己的工時，請先按右上角 👤 登入。');return false}
+async function pinSha(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('fsd:pin:'+v));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function paintWho(){const b=document.getElementById('whoBtn');if(!b)return;if(!authOn()){b.style.display='none';return}b.style.display='';const r=curRole();
+  b.textContent='👤 '+(r==='admin'?'管理者':r==='guest'?'未登入':(SS.get('rep_me')||'')+'｜'+((REP_ROLES.find(x=>x[0]===r)||[])[1]||''))}
+function whoClose(){document.getElementById('whoDlgBg').classList.remove('on')}
+function whoDlg(){const L=repPeople(),grp=r=>L.filter(p=>roleOfP(p)===r);
+  const row=(r,lab)=>{const g=grp(r);return g.length?`<div class="hint" style="margin-bottom:4px">${lab}</div><div class="chips" style="margin-bottom:10px">${g.map(p=>`<button class="chip" data-who="${r}" data-n="${esc(p.name)}">${esc(p.name)}</button>`).join('')}</div>`:''};
+  const body=document.getElementById('whoBody');
+  body.innerHTML=row('eng','工程師')+row('chief','主任')+`<div class="hint" style="margin-bottom:4px">其他</div><div class="chips"><button class="chip" data-who="admin">🔧 系統管理員</button><button class="chip" data-who="guest">登出（共用報工電腦）</button></div>
+    <p class="hint" style="margin-top:10px">PIN 和訊息單系統、Repair Shop 共用（入口網站「共用設定」維護）。沒設 PIN 的人請先到訊息單系統或 Repair Shop 設定。</p>`;
+  document.getElementById('whoDlgBg').classList.add('on');
+  body.onclick=async e=>{const t=e.target.closest('[data-who]');if(!t)return;const r=t.dataset.who,n=t.dataset.n||'';
+    if(r==='guest'){adminOK=false;SS.del('rep_role');SS.del('rep_me');whoClose();afterWho();return}
+    if(r==='admin'){whoClose();if(!M().adminHash){adminOK=true;afterWho();return}adminOK=false;withAdmin(()=>afterWho());return}
+    const p=L.find(x=>x.name===n);if(!p||!p.pin){alert(n+' 還沒有 PIN。請先在訊息單系統或 Repair Shop 登入一次設定 PIN，入口網站同步後就能在這裡使用。');return}
+    body.innerHTML=`<div style="font-size:16px;font-weight:800;margin-bottom:8px">${esc(n)}</div><input type="password" class="inp" id="whoPin" style="width:100%" placeholder="PIN" inputmode="numeric"><div id="whoErr" style="color:var(--red);font-size:13px;margin-top:6px"></div><div class="row" style="margin-top:10px"><button class="btn btn-p" id="whoOk">確定</button></div>`;
+    body.onclick=null;const go=async()=>{if(await pinSha(document.getElementById('whoPin').value)!==p.pin){document.getElementById('whoErr').textContent='PIN 錯誤';return}
+      adminOK=false;SS.set('rep_role',r);SS.set('rep_me',n);whoClose();afterWho()};
+    document.getElementById('whoOk').onclick=go;document.getElementById('whoPin').onkeydown=e=>{if(e.key==='Enter')go()};document.getElementById('whoPin').focus()};
+}
+function afterWho(){paintWho();applyPerm();const me=curName();if(me)['ws','fs'].forEach(k=>{if(FORM[k]&&!FORM[k].id){FORM[k].staff=me;paintChips(k)}})}
+function applyPerm(){const rt=document.querySelector('.tab[data-p="rpt"]');if(rt)rt.style.display=can('rpt.view')?'':'none';
+  if(!can('rpt.view')&&document.getElementById('p-rpt').classList.contains('active'))showTab('ws');paintWho()}
+const ADM_TABS=[['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['perm','set.perm']];
+function admTabs(){return ADM_TABS.filter(t=>can(t[1])).map(t=>t[0])}
+function renderPerm(){const t=document.getElementById('permTbl');if(!t)return;const pm=M().perms||{};
+  document.getElementById('permNote').innerHTML=authOn()?'':'<b>共用設定還沒有人員名單（或這台還沒讀到），登入功能尚未啟用；目前只有「管理者」（管理密碼）與「其他」兩種身分。</b>';
+  t.innerHTML='<tr><th>功能</th><th>說明</th>'+REP_ROLES.map(r=>`<th>${r[1]}</th>`).join('')+'</tr>'+REP_PERM.map(([k,l,d,def])=>`<tr><td>${esc(l)}</td><td class="hint" style="white-space:normal">${esc(d)}</td>${REP_ROLES.map(([r],i)=>{const v=(pm[k]||{})[r]||def[i];const fx=r==='admin'&&k.startsWith('set.');return `<td><select class="inp" data-pk="${k}" data-pr="${r}"${fx?' disabled':''}><option value="Y"${v==='Y'?' selected':''}>可</option><option value="N"${v==='N'?' selected':''}>不可</option></select></td>`}).join('')}</tr>`).join('')}
+function permSave(){if(!need('set.perm'))return;const pm={};document.querySelectorAll('#permTbl [data-pk]').forEach(x=>{(pm[x.dataset.pk]=pm[x.dataset.pk]||{})[x.dataset.pr]=x.value});setMaster({perms:pm});renderPerm();applyPerm();autoSync();alert('權限已儲存，同步後其他電腦與手機生效（手機要重新傳設定連結）。')}
+function permDefault(){if(!confirm('權限恢復預設值？'))return;setMaster({perms:{}});renderPerm();applyPerm();autoSync()}
+
 // ═══ 主檔視窗 ═══
-function openAdmin(){withAdmin(openAdminReal)}
+function openAdmin(){if(admTabs().length)return openAdminReal();withAdmin(()=>{adminOK=true;applyPerm();openAdminReal()})}
 function openAdminReal(){
   const m=M();
   document.getElementById('mStaff').value=m.staff.join('\n');
@@ -1272,7 +1350,11 @@ function openAdminReal(){
   document.getElementById('mSvc').value=(m.services||[]).join('\n');
   fillTRows('tShift',m.shifts); fillTRows('tBreak',m.breaks);
   document.getElementById('dataInfo').textContent=`本機共 ${live().length} 筆有效紀錄（含已刪除標記 ${DB.records.length} 筆）`;
-  showFileName(); document.getElementById('adm').classList.add('on');
+  showFileName(); renderPerm();
+  const ok=admTabs();document.querySelectorAll('.mtab').forEach(b=>b.style.display=ok.includes(b.dataset.m)?'':'none');
+  const cur=(document.querySelector('.mtab.on')||{}).dataset;mTab(cur&&ok.includes(cur.m)?cur.m:ok[0]);
+  document.querySelector('#adm .mft .btn-p').style.display=(ok.includes('list')||ok.includes('time'))?'':'none';
+  document.getElementById('adm').classList.add('on');
 }
 function closeAdmin(){document.getElementById('adm').classList.remove('on')}
 function mTab(t){document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('on',b.dataset.m===t));
@@ -1286,7 +1368,8 @@ function saveAdmin(){
   if(!tc.includes('WS')||!tc.includes('FS')){alert('工作類型必須保留 WS 和 FS 兩個代碼');return}
   const shifts=readTRows('tShift','時段'); if(!shifts) return; if(!Object.keys(shifts).length){alert('至少要有一個時段');return}
   const breaks=readTRows('tBreak','休息'); if(!breaks) return;
-  setMaster({staff,types,stations,customers,models,services,shifts,breaks});
+  const ch={};if(can('set.list'))Object.assign(ch,{staff,types,stations,customers,models,services});if(can('set.time'))Object.assign(ch,{shifts,breaks});
+  setMaster(ch);
   closeAdmin(); renderAll(true); autoSync();
 }
 function trRow(n,a,b){return `<tr><td><input class="inp" style="width:110px" value="${esc(n)}"></td><td><input class="inp t" value="${esc(a)}"></td><td>–</td><td><input class="inp t" value="${esc(b)}"></td><td><button class="ib" title="刪除" onclick="this.closest('tr').remove()">✕</button></td></tr>`}
@@ -1366,7 +1449,7 @@ document.body.insertAdjacentHTML('beforeend','<datalist id="woList"></datalist><
 buildPage('ws');buildPage('fs');
 document.getElementById('bDate').value=today();
 document.getElementById('rMonth').value=today().slice(0,7);
-renderAll(true); applyRole();
+renderAll(true); applyRole(); applyPerm();
 (async()=>{
   if(location.hash.startsWith('#cfg=')){const h=location.hash; history.replaceState(null,'',location.pathname+location.search); await applyCfgText(h,true)}
   else if(location.hash.startsWith('#fs=')){const h=location.hash; history.replaceState(null,'',location.pathname+location.search); await applyFsLink(decodeURIComponent(h.slice(4)))}

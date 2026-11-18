@@ -171,7 +171,7 @@ body.station .notstation{display:none!important}
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V3.2<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V3.3<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
   <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="whoBtn" style="display:none;background:rgba(255,255,255,.15)" onclick="whoDlg()" title="切換身分"></button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
@@ -265,12 +265,12 @@ body.station .notstation{display:none!important}
     <div class="box notstation" style="border-color:#8e44ad;background:#F5EEF8"><b>📅 Repair Shop 排程檔：</b><span id="rsPlanName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickRsPlan()">📂 選擇 rs_kiosk.json</button><button class="btn btn-o btn-s" onclick="forgetRsPlan()">取消設定</button></div>
       <p>選 Repair Shop 資料夾裡的 <b>rs_kiosk.json</b>（看板主機：C:\SvcShare\50_RepairShop）。同步時會把未來 10 天的排程帶進主檔，手機和其他電腦同步後，「工單號」下方就會列出今天排給該人員的工單，點一下就帶入工單、站別、型號。只需要一台會同步的電腦設定。</p></div>
-    <div class="box notstation" style="border-color:#2E7D32;background:#E8F5E9"><b>🚐 訊息單資料夾：</b><span id="fsDirName">未設定</span>
+    <div class="box" style="border-color:#2E7D32;background:#E8F5E9"><b>🚐 訊息單資料夾：</b><span id="fsDirName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickFsDir()">📂 選擇 30_FieldService 資料夾</button><button class="btn btn-o btn-s" onclick="forgetFsDir()">取消設定</button></div>
-      <p>選訊息單系統的資料夾（裡面有 cases）。同步時讀前 45 天到後 30 天的訊息單帶進主檔，報工頁會列出排給各人的訊息單，點一下就帶入客戶、設備、時間。只需要一台會同步的電腦設定（建議你的電腦）。</p></div>
-    <div class="box notstation" style="border-color:#1565C0;background:#E8EAF6"><b>🔧 Repair Shop 資料夾：</b><span id="rsDirName">未設定</span>
+      <p>選訊息單系統的資料夾（裡面有 cases）。同步時讀前 45 天到後 30 天的訊息單帶進主檔，報工頁會列出排給各人的訊息單，點一下就帶入客戶、設備、時間。<b>內網報工電腦建議也設定</b>（選 S:\30_FieldService），卡片就不必等其他電腦同步。</p></div>
+    <div class="box" style="border-color:#1565C0;background:#E8EAF6"><b>🔧 Repair Shop 資料夾：</b><span id="rsDirName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickRsDir()">📂 選擇 50_RepairShop 資料夾</button><button class="btn btn-o btn-s" onclick="forgetRsDir()">取消設定</button></div>
-      <p>選 Repair Shop 的資料夾（裡面有 jobs）。同步時讀工單（客戶、型號）和 rs_kiosk.json 排程，輸入工單號會自動帶出，不在排程裡的會標「計畫外」。設定這個之後，上面的「Repair Shop 排程檔」可以不用設。</p></div>
+      <p>選 Repair Shop 的資料夾（裡面有 jobs）。同步時讀工單（客戶、型號）和 rs_kiosk.json 排程，輸入工單號會自動帶出，不在排程裡的會標「計畫外」。設定這個之後，上面的「Repair Shop 排程檔」可以不用設。<b>內網報工電腦建議也設定</b>（選 S:\50_RepairShop）。</p></div>
     <div class="box notstation" style="border-color:#1565C0;background:#E3F2FD"><b>☁ SharePoint 自動備份</b>　<span id="spSt" class="hint"></span>
       <div class="row" style="margin-top:8px"><label style="font-size:13px;cursor:pointer"><input type="checkbox" id="spOn" onchange="toggleSp(this.checked)"> 啟用</label>
         <button class="btn btn-b btn-s" onclick="pickSp()">📂 選擇備份位置</button><button class="btn btn-o btn-s" onclick="forgetSp()">取消設定</button></div>
@@ -1573,6 +1573,7 @@ async function applyFsDir(interactive){
         list.push({fsn:String(j.fsn).toUpperCase(),c:j.cust||'',d:j.date,d2,t1:j.tStart||'',t2:j.tEnd||'',st:(j.staff||[]).slice(),ty:j.type||'',tk:(sg.tasks||[]).slice(0,4),it,ct:j.content||'',stg:j.stage||''})}}
     list.sort((a,b)=>(a.d+a.fsn).localeCompare(b.d+b.fsn));
     if(JSON.stringify(list)!==JSON.stringify(fsList())||!(M().fsPlan||{}).since)setMaster({fsPlan:{at:new Date().toISOString(),since:(M().fsPlan||{}).since||today(),list}});
+    try{localStorage.setItem('q_fsread',new Date().toISOString())}catch(e){}
     return '';
   }catch(e){return ' · 訊息單資料夾讀取失敗'}}
 // ── 讀 Repair Shop 資料夾（50_RepairShop）→ 工單索引 woIdx＋排程 rsPlan ──
@@ -1595,6 +1596,7 @@ async function applyRsDir(interactive){
       map[String(j.wo).toUpperCase()]={c:s.cust||'',n:String(s.model||'').toUpperCase(),t:s.type||'',u:j.u||s.u||''}}
     if(JSON.stringify(map)!==JSON.stringify(woMap())||!(M().woIdx||{}).since)setMaster({woIdx:{at:new Date().toISOString(),since:(M().woIdx||{}).since||today(),map}});
     let pm='';try{const kh=await root.getFileHandle('rs_kiosk.json');const kj=JSON.parse((await (await kh.getFile()).text()).replace(/^﻿/,''));pm=rsPlanFromKiosk(kj)}catch(e){}
+    try{localStorage.setItem('q_rsread',new Date().toISOString())}catch(e){}
     return pm;
   }catch(e){return ' · Repair Shop 資料夾讀取失敗'}}
 function rsPlanFromKiosk(j){if(!j||j.app!=='repair-shop-kiosk')return ' · 排程檔內容不正確';
@@ -1620,7 +1622,7 @@ function buildQuick(){
     <div class="qrow"><input type="date" class="inp" id="q-date"><button class="btn btn-o btn-s" onclick="qSetDate(today())">今天</button><button class="btn btn-o btn-s" onclick="qSetDate(addDays(Q.date,-1))">前一天</button>
       <span class="qme" id="q-me"></span></div>
     <div class="chips qstaff" id="q-staff"></div>
-    <div id="q-jobs"></div>
+    <div id="q-jobs"></div><div class="hint qfresh" id="q-fresh"></div>
     <div class="qnum"><input class="inp" id="q-num" placeholder="輸入單號：FS… 或 WO…" autocomplete="off" autocapitalize="characters">
       <button class="btn btn-b" onclick="qPickNum(document.getElementById('q-num').value)">帶入</button>
       <button class="btn btn-o scanbtn" onclick="scanWO('q')">📷</button></div>
@@ -1658,8 +1660,19 @@ function renderQuick(){
   const oth=wsTypes().filter(t=>!['WS'].includes(code(t)));
   document.getElementById('q-other').innerHTML=oth.map(t=>`<button class="chip ${Q.job&&Q.job.kind==='OT'&&Q.f.type===t?'on':''}" onclick="qPickOther('${esc(t)}')">${esc(code(t))}<small>${esc(t.split(' ').slice(1).join(' '))}</small></button>`).join('')
     +(!S||isFsEng(S)?`<button class="chip ${Q.job&&Q.job.kind==='OT'&&Q.f.svc==='廠內作業'?'on':''}" onclick="qPickOther('','廠內作業')">廠內作業<small>廠外人員</small></button>`:'');
-  renderQForm();renderQDay();
+  renderQFresh();renderQForm();renderQDay();
 }
+// V3.3 資料時間：本機讀資料夾的時間，或其他電腦提供的最後變更時間
+function renderQFresh(){const el=document.getElementById('q-fresh');if(!el)return;
+  const ls=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+  const fmt=t=>{if(!t)return '';const d=new Date(t);if(isNaN(d))return '';const p=n=>String(n).padStart(2,'0');return (d.getMonth()+1)+'/'+d.getDate()+' '+p(d.getHours())+':'+p(d.getMinutes())};
+  const old=t=>!t||Date.now()-new Date(t).getTime()>20*3600e3;
+  const part=(lbl,local,remote,has)=>{if(local)return {t:`${lbl} 本機讀取 ${fmt(local)}`,w:old(local)};
+    if(has&&remote)return {t:`${lbl} 由其他電腦提供 ${fmt(remote)}`,w:old(remote)};return {t:`${lbl} 無資料`,w:true}};
+  const a=part('訊息單',ls('q_fsread'),(M().fsPlan||{}).at,fsList().length>0),
+        b=part('工單',ls('q_rsread'),(M().woIdx||{}).at||(M().rsPlan||{}).at,Object.keys(woMap()).length>0);
+  const w=a.w||b.w;
+  el.innerHTML=`📡 ${esc(a.t)} · ${esc(b.t)}`+(w?` <span style="color:#E65100;font-weight:700">⚠ 資料可能不是最新，請按「同步」${isStation()?'；或到 ⚙ 設定連結資料夾':''}</span>`:'');}
 function qMsg(t,cls){const m=document.getElementById('q-msg');m.className='msg '+(cls||'');m.textContent=t||''}
 function qPickNum(v,st,t1,t2){
   v=String(v||'').trim().toUpperCase();qMsg('');

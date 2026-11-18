@@ -134,26 +134,58 @@ body.station .notstation{display:none!important}
 #scanOv .scframe{position:absolute;inset:18%;border:3px solid #4fc3f7;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 #scanMsg{font-size:15px;text-align:center}
 #scanOv .btn{background:#fff;color:#000;min-width:120px}
+/* V3.0 快速報工 */
+.qcard .card-bd{padding:14px 16px}
+.qrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qme{margin-left:auto;font-size:14px}
+.qstaff{margin:10px 0}
+.qhint{margin:8px 0}
+.qjobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:6px 0 10px}
+.qjob{position:relative;text-align:left;border:1.5px solid var(--border);border-left:5px solid var(--blue);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:1px;font-family:inherit;font-size:13px}
+.qjob.fs{border-left-color:var(--green2)}.qjob.on{background:#E3F2FD;border-color:var(--blue)}
+.qjob b{font-size:14px}.qjob small{color:var(--grey2);font-size:11.5px}
+.qk{font-size:11px;font-weight:800;color:var(--grey2)}
+.qdone{position:absolute;right:8px;top:6px;font-size:11px;color:var(--green2);font-weight:800}
+.qnum{display:flex;gap:6px;margin:8px 0}.qnum .inp{flex:1;min-width:0;font-size:15px;text-transform:uppercase}
+.qother{margin:4px 0 6px}
+.qsel{margin-top:10px;border:2px solid var(--blue);border-radius:12px;padding:12px;background:#FAFCFF}
+.qinfo{border-radius:9px;padding:8px 10px;margin-bottom:10px;background:#E8F5E9;display:flex;flex-direction:column;gap:2px}
+.qinfo.rs{background:#E3F2FD}.qinfo.warn{background:#FFF3E0}.qinfo b{font-size:15px}
+.qunpl{background:#E65100;color:#fff;border-radius:4px;padding:0 5px;font-size:11px;font-weight:700}
+.qf{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;align-items:start;margin:8px 0}
+.qf>label{font-size:12px;font-weight:700;color:var(--grey2);padding-top:6px}.qf .req::after{content:' *';color:var(--red2)}
+.qcalc{font-weight:800;color:var(--blue)}
+.qitems{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.qit{background:#fff;border:1px solid var(--border);border-radius:6px;padding:3px 8px}
+.qitems .hint{flex-basis:100%}
+.qact{display:flex;gap:8px;margin-top:10px}.qsave{flex:1;max-width:320px;font-size:16px;padding:10px}
+.qday{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--grey4);padding:7px 0}.qd1{flex:1;min-width:0}.qh{font-weight:800;white-space:nowrap}
+@media(max-width:700px){
+  .qcard .card-bd{padding:10px}.qjobs{grid-template-columns:1fr}.qjob{padding:10px 12px}.qjob b{font-size:16px}
+  .qf{grid-template-columns:1fr;gap:4px}.qf>label{padding-top:0}
+  #p-q .chip{font-size:15px;padding:9px 15px}#p-q .inp{font-size:16px;height:40px}.qsave{max-width:none;font-size:18px;padding:13px}
+  .qnum .btn{padding:8px 12px}
+  .qcard.qpicked #q-staff,.qcard.qpicked #q-jobs,.qcard.qpicked .qnum,.qcard.qpicked .qother{display:none!important}}
 </style>
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V2.5<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V3.0<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
   <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="whoBtn" style="display:none;background:rgba(255,255,255,.15)" onclick="whoDlg()" title="切換身分"></button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
-  <button class="tab active" data-p="ws" onclick="showTab('ws')">🔧 廠內／其他</button>
-  <button class="tab" data-p="fs" onclick="showTab('fs')">🚐 廠外報工</button>
-  <button class="tab" data-p="board" onclick="showTab('board')">📺 今日看板</button>
+  <button class="tab active" data-p="q" onclick="showTab('q')">⚡ 報工</button>
+  <button class="tab" data-p="ws" onclick="showTab('ws')">🔧 廠內明細</button>
+  <button class="tab" data-p="fs" onclick="showTab('fs')">🚐 廠外明細</button>
   <button class="tab" data-p="rpt" onclick="showTab('rpt')">📊 月報</button>
   <button class="tab" data-p="adm" onclick="openAdmin()">⚙ 設定</button>
 </div>
 
 <div class="main">
-  <div class="panel active" id="p-ws"></div>
+  <div class="panel active" id="p-q"></div>
+  <div class="panel" id="p-ws"></div>
   <div class="panel" id="p-fs"></div>
 
-  <div class="panel" id="p-board">
+  <div class="panel" id="p-board" style="display:none!important">
     <div class="card"><div class="card-hd"><h2>📺 今日看板 — 依實際報工顯示</h2>
       <input type="date" class="inp" id="bDate" onchange="renderBoard()">
       <button class="btn btn-o btn-s" onclick="bShift(-1)">◀ 前一天</button>
@@ -230,6 +262,12 @@ body.station .notstation{display:none!important}
     <div class="box notstation" style="border-color:#8e44ad;background:#F5EEF8"><b>📅 Repair Shop 排程檔：</b><span id="rsPlanName">未設定</span>
       <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickRsPlan()">📂 選擇 rs_kiosk.json</button><button class="btn btn-o btn-s" onclick="forgetRsPlan()">取消設定</button></div>
       <p>選 Repair Shop 資料夾裡的 <b>rs_kiosk.json</b>（看板主機：C:\SvcShare\50_RepairShop）。同步時會把未來 10 天的排程帶進主檔，手機和其他電腦同步後，「工單號」下方就會列出今天排給該人員的工單，點一下就帶入工單、站別、型號。只需要一台會同步的電腦設定。</p></div>
+    <div class="box notstation" style="border-color:#2E7D32;background:#E8F5E9"><b>🚐 訊息單資料夾：</b><span id="fsDirName">未設定</span>
+      <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickFsDir()">📂 選擇 30_FieldService 資料夾</button><button class="btn btn-o btn-s" onclick="forgetFsDir()">取消設定</button></div>
+      <p>選訊息單系統的資料夾（裡面有 cases）。同步時讀前 45 天到後 30 天的訊息單帶進主檔，報工頁會列出排給各人的訊息單，點一下就帶入客戶、設備、時間。只需要一台會同步的電腦設定（建議你的電腦）。</p></div>
+    <div class="box notstation" style="border-color:#1565C0;background:#E8EAF6"><b>🔧 Repair Shop 資料夾：</b><span id="rsDirName">未設定</span>
+      <div class="row" style="margin-top:8px"><button class="btn btn-b btn-s" onclick="pickRsDir()">📂 選擇 50_RepairShop 資料夾</button><button class="btn btn-o btn-s" onclick="forgetRsDir()">取消設定</button></div>
+      <p>選 Repair Shop 的資料夾（裡面有 jobs）。同步時讀工單（客戶、型號）和 rs_kiosk.json 排程，輸入工單號會自動帶出，不在排程裡的會標「計畫外」。設定這個之後，上面的「Repair Shop 排程檔」可以不用設。</p></div>
     <div class="box notstation" style="border-color:#1565C0;background:#E3F2FD"><b>☁ SharePoint 自動備份</b>　<span id="spSt" class="hint"></span>
       <div class="row" style="margin-top:8px"><label style="font-size:13px;cursor:pointer"><input type="checkbox" id="spOn" onchange="toggleSp(this.checked)"> 啟用</label>
         <button class="btn btn-b btn-s" onclick="pickSp()">📂 選擇備份位置</button><button class="btn btn-o btn-s" onclick="forgetSp()">取消設定</button></div>
@@ -353,6 +391,9 @@ function fixMaster(m){if(!Array.isArray(m.models))m.models=[...DEFAULT_MASTER.mo
   if(!Array.isArray(m.mig)) m.mig=[];
   if(!m.rsPlan||!Array.isArray(m.rsPlan.list)) m.rsPlan={at:'',list:[]};
   if(!Array.isArray(m.people)) m.people=[];
+  if(!m.fsPlan||!Array.isArray(m.fsPlan.list)) m.fsPlan={at:'',list:[]};
+  if(!m.woIdx||typeof m.woIdx.map!=='object'||!m.woIdx.map) m.woIdx={at:'',map:{}};
+  if(!m.custMin||typeof m.custMin!=='object') m.custMin={};
   if(!m.perms||typeof m.perms!=='object') m.perms={};
   if(!m.mig.includes('v196')){ // 一次性：補「其他」「廠內作業」（之後刪掉不會再加回）
     if(Array.isArray(m.types)&&!m.types.some(t=>String(t).split(' ')[0]==='OTH')) m.types=[...m.types,'OTH 其他'];
@@ -360,7 +401,7 @@ function fixMaster(m){if(!Array.isArray(m.models))m.models=[...DEFAULT_MASTER.mo
     m.mig=[...m.mig,'v196']}
   return m}
 // ── 主檔：逐欄位時間戳，合併時各欄位取較新者（避免空白主檔蓋掉人員清單）──
-const MF=['staff','types','stations','customers','services','models','shifts','breaks','formUrl','adminHash','woFmt','rsPlan','people','perms'];
+const MF=['staff','types','stations','customers','services','models','shifts','breaks','formUrl','adminHash','woFmt','rsPlan','people','perms','fsPlan','woIdx','custMin'];
 const fts=(m,k)=>!m?0:(m.fts&&typeof m.fts==='object')?(+m.fts[k]||0):(m.updatedAt||0);
 function setMaster(ch){const now=Date.now(),m={...M(),fts:{}}; for(const k of MF) m.fts[k]=fts(M(),k);
   for(const k in ch){if(JSON.stringify(m[k]??'')!==JSON.stringify(ch[k]??'')){m[k]=ch[k];m.fts[k]=now}}
@@ -582,6 +623,7 @@ async function scanWO(kind){
 }
 function scanStop(){if(SCAN){SCAN.on=false;try{SCAN.st.getTracks().forEach(t=>t.stop())}catch(e){}}SCAN=null;document.getElementById('scanOv').classList.remove('on')}
 function scanDone(wo){const kind=SCAN.kind;scanStop();try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}
+  if(kind==='q'){qPickNum(wo);return}
   const F=FORM[kind];F.wo=wo;F.noWo=false;const plan=((M().rsPlan||{}).list||[]).find(x=>x.wo===wo&&x.d===F.date&&(!F.staff||x.s===F.staff))||((M().rsPlan||{}).list||[]).find(x=>x.wo===wo);
   if(plan){if(M().stations.includes(plan.st)&&(!F.station||plan.s===F.staff))F.station=plan.st;if(plan.m&&!F.modelNo)F.modelNo=String(plan.m).toUpperCase()}
   woFill(kind);paintChips(kind);const i=document.getElementById(kind+'-wo');if(i){i.value=wo;i.classList.remove('err')}
@@ -731,7 +773,7 @@ function renderList(kind){
   const body=rows.map(r=>{const h=hoursOf(r),e=checkRec(r);tot+=h;
     return `<tr><td>${r.date.slice(5).replace('-','/')}</td><td>${esc(r.staff)}</td><td>${tagHTML(r.type)}${esc(r.type.split(' ').slice(1).join(' '))}</td>
     <td>${r.start}–${r.end}${r.shift?` <span class="hint">${esc(r.shift)}</span>`:''}</td>
-    ${isWS?`<td>${esc(r.wo)}</td><td>${mdl(r)}</td><td>${esc(r.station)}</td>`:`<td>${esc(r.cust)}${r.fsn?`<div class="hint">${esc(r.fsn)}</div>`:''}</td><td>${esc(r.svc||'')}</td><td class="n">${r.travel||'-'}</td><td class="n">${fmt1(h-(+r.travel||0))}</td><td>${esc([...new Set([r.wo,...(r.items||[]).map(i=>i.wo)].filter(Boolean))].join(' '))}</td><td>${mdl(r)}</td>`}
+    ${isWS?`<td>${esc(r.wo)}</td><td>${mdl(r)}</td><td>${esc(r.station)}${r.unpl?' <span class="qunpl">計畫外</span>':''}</td>`:`<td>${esc(r.cust)}${r.fsn?`<div class="hint">${esc(r.fsn)}</div>`:''}</td><td>${esc(r.svc||'')}</td><td class="n">${r.travel||'-'}</td><td class="n">${fmt1(h-(+r.travel||0))}</td><td>${esc([...new Set([r.wo,...(r.items||[]).map(i=>i.wo)].filter(Boolean))].join(' '))}</td><td>${mdl(r)}</td>`}
     <td class="n"><b>${fmt1(h)}</b></td><td>${esc(r.note)}${e?` <span class="bad-cell">⚠ ${esc(e)}</span>`:''}</td>
     <td style="white-space:nowrap"><button class="ib" title="編輯" onclick="editRec('${kind}','${r.id}')">✎</button><button class="ib del" title="刪除" onclick="delRec('${r.id}')">✕</button></td></tr>`}).join('');
   document.getElementById(kind+'-tbl').innerHTML=head+body;
@@ -885,6 +927,8 @@ async function showFileName(){const h=await IDB.get('file').catch(()=>null);cons
   const sh=await IDB.get('spbak').catch(()=>null);const so=document.getElementById('spOn');if(so)so.checked=spOn()&&!!sh;
   const ss=document.getElementById('spSt');if(ss)ss.textContent=sh?`${sh.name}${spOn()?' · 已啟用':' · 已停用'}${localStorage.getItem('svc_report_sp_time')?' · 上次 '+localStorage.getItem('svc_report_sp_time'):''}`:'（未設定）';
   const rph=await IDB.get('rsplan').catch(()=>null);const rpe=document.getElementById('rsPlanName');if(rpe){const L=(M().rsPlan||{}).list||[];rpe.textContent=(rph?rph.name+' · ':'')+(L.length?'主檔內有 '+L.length+' 筆排程（'+(M().rsPlan.at?new Date(M().rsPlan.at).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'')+'）':rph?'尚未讀到排程':'未設定')}
+  const fdh=await IDB.get('fsdir').catch(()=>null);const fde=document.getElementById('fsDirName');if(fde)fde.textContent=(fdh?fdh.name+' · ':'')+(fsList().length?'主檔內有 '+fsList().length+' 張訊息單':fdh?'尚未讀到':'未設定');
+  const rdh=await IDB.get('rsdir').catch(()=>null);const rde=document.getElementById('rsDirName');if(rde)rde.textContent=(rdh?rdh.name+' · ':'')+(Object.keys(woMap()).length?'主檔內有 '+Object.keys(woMap()).length+' 張工單':rdh?'尚未讀到':'未設定');
   const shh=await IDB.get('shset').catch(()=>null);const sse=document.getElementById('shSetName');
   if(sse){let inf={};try{inf=JSON.parse(localStorage.getItem(SHSET_KEY))||{}}catch(e){}
     const wf=M().woFmt||{};sse.textContent=shh?`${shh.name}${inf.read?' · 上次讀取 '+new Date(inf.read).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''} · 機種 ${M().models.length} 個 · WO 格式 ${wf.pattern?'已設定':'未設定'}`:'未設定'}
@@ -917,7 +961,7 @@ async function syncNow(interactive){
     DB=mergeDB(DB,remote);
     const inbox=await readInbox(interactive);
     inbox.items.forEach(it=>{DB=mergeDB(DB,{records:it.data.records||[],master:it.data.master||{updatedAt:0}})});
-    const shMsg=(await applyShSet(interactive))+(await applyRsPlan(interactive));
+    const shMsg=(await applyShSet(interactive))+(await applyRsPlan(interactive))+(await applyFsDir(interactive))+(await applyRsDir(interactive));
     const out=JSON.stringify(DB);
     const w=await h.createWritable(); await w.write(out); await w.close();
     for(const it of inbox.items){try{await inbox.dir.removeEntry(it.name)}catch(e){}}
@@ -941,11 +985,7 @@ async function applyRsPlan(interactive){
   const h=await IDB.get('rsplan').catch(()=>null);if(!h)return '';
   try{let p=await h.queryPermission({mode:'read'});if(p!=='granted'){if(!interactive)return ' · 排程檔待授權';p=await h.requestPermission({mode:'read'});if(p!=='granted')return ''}
     const j=JSON.parse((await (await h.getFile()).text()).replace(/^\uFEFF/,''));if(!j||j.app!=='repair-shop-kiosk')return ' · 排程檔內容不正確';
-    const t=today(),lo=addDays(t,-3),hi=addDays(t,10),list=[];
-    for(const [d,es] of Object.entries(j.days||{})){if(d<lo||d>hi)continue;for(const e of es||[])if(e.wo&&!e.task)list.push({d,s:e.staff,wo:e.wo,st:e.station,c:e.cust||'',m:e.model||''})}
-    list.sort((a,b)=>(a.d+a.s+a.st).localeCompare(b.d+b.s+b.st));
-    if(JSON.stringify(list)!==JSON.stringify((M().rsPlan||{}).list||[]))setMaster({rsPlan:{at:j.at||'',list}});
-    return '';
+    return rsPlanFromKiosk(j);
   }catch(e){return ' · 排程檔讀取失敗'}
 }
 // ── 共用設定（NAS「共用設定」資料夾，由入口網站維護）──
@@ -984,6 +1024,8 @@ async function applyShSet(interactive,force){
     if(stf.length&&JSON.stringify(stf)!==JSON.stringify(M().staff)) ch.staff=stf;
     const cst=Array.isArray(j.customers)?[...new Set(j.customers.map(c=>String(c&&c.name||'').trim()).filter(Boolean))]:[];
     if(cst.length&&JSON.stringify(cst)!==JSON.stringify(M().customers)) ch.customers=cst;
+    const cm={};(Array.isArray(j.customers)?j.customers:[]).forEach(c=>{const n=String(c&&c.name||'').trim();if(n&&+c.min>0)cm[n]=+c.min});
+    if(Object.keys(cm).length&&JSON.stringify(cm)!==JSON.stringify(M().custMin||{})) ch.custMin=cm;
     const pl=ppl.map(x=>({name:String(x.name).trim(),roles:(x.roles||[]).filter(r=>typeof r==='string'),pin:x.pin||''}));
     if(JSON.stringify(pl)!==JSON.stringify(M().people||[])) ch.people=pl;
     SHMAN={stations:!!stn.length,shifts:okT(j.shifts),breaks:okT(j.breaks),staff:!!stf.length,customers:!!cst.length,models:!!fam.length};
@@ -1045,9 +1087,10 @@ async function unpackText(t){
   return decodeFlowBody(JSON.parse(t));
 }
 const slim=r=>Object.fromEntries(Object.entries(r).filter(([k,v])=>v!==''&&v!=null));
+function slimMaster(m){const o={...m};delete o.fsPlan;delete o.woIdx;delete o.custMin;return o}
 async function buildChunks(recs,master){
   const out=[]; let cur=[];
-  const pack=async(rs,m)=>packText({app:'service-report',ver:1,from:'forms',records:rs.map(slim),...(m?{master:m}:{})});
+  const pack=async(rs,m)=>packText({app:'service-report',ver:1,from:'forms',records:rs.map(slim),...(m?{master:slimMaster(m)}:{})});
   let first=true;
   for(const r of recs){
     const test=await pack([...cur,r],first?master:null);
@@ -1112,7 +1155,7 @@ async function makeCfgLink(){
   if(!parseFormUrl(fu)){alert('Forms 網址格式不對：要用「取得預先填寫的 URL」產生、資料欄填 TEST 的那串網址');return}
   localStorage.setItem(HOST_KEY,host);
   if(M().formUrl!==fu){setMaster({formUrl:fu});autoSync()}
-  const code=await packText({app:'service-report',cfg:1,master:M()});
+  const code=await packText({app:'service-report',cfg:1,master:slimMaster(M())});
   const base=host.replace(/#.*$/,''); const link=base+(base.includes('?')?'&':'?')+'openExternalBrowser=1#cfg='+code;
   document.getElementById('cfgOut').value=link;
   document.getElementById('cfgInfo').textContent=`長度 ${link.length} 字元 · 人員 ${M().staff.length}、客戶 ${M().customers.length}、機種 ${M().models.length}`;
@@ -1335,9 +1378,9 @@ function whoDlg(){const L=repPeople(),grp=r=>L.filter(p=>roleOfP(p)===r);
       adminOK=false;SS.set('rep_role',r);SS.set('rep_me',n);whoClose();afterWho()};
     document.getElementById('whoOk').onclick=go;document.getElementById('whoPin').onkeydown=e=>{if(e.key==='Enter')go()};document.getElementById('whoPin').focus()};
 }
-function afterWho(){paintWho();applyPerm();const me=curName();if(me)['ws','fs'].forEach(k=>{if(FORM[k]&&!FORM[k].id){FORM[k].staff=me;paintChips(k)}})}
+function afterWho(){paintWho();applyPerm();Q.staff=curName()||Q.staff;Q.job=null;const me=curName();if(me)['ws','fs'].forEach(k=>{if(FORM[k]&&!FORM[k].id){FORM[k].staff=me;paintChips(k)}})}
 function applyPerm(){const rt=document.querySelector('.tab[data-p="rpt"]');if(rt)rt.style.display=can('rpt.view')?'':'none';
-  if(!can('rpt.view')&&document.getElementById('p-rpt').classList.contains('active'))showTab('ws');paintWho()}
+  if(!can('rpt.view')&&document.getElementById('p-rpt').classList.contains('active'))showTab('q');paintWho();renderQuick()}
 const ADM_TABS=[['shared','set.list'],['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['perm','set.perm']];
 function admTabs(){return ADM_TABS.filter(t=>can(t[1])).map(t=>t[0])}
 function renderPerm(){const t=document.getElementById('permTbl');if(!t)return;const pm=M().perms||{};
@@ -1364,7 +1407,7 @@ function openAdminReal(){
   document.querySelector('#p-adm .mft').style.display=(ok.includes('list')||ok.includes('time'))?'':'none';
   showTab('adm');
 }
-function closeAdmin(){const p=document.getElementById('p-adm');if(p&&p.classList.contains('active'))showTab('ws')}
+function closeAdmin(){const p=document.getElementById('p-adm');if(p&&p.classList.contains('active'))showTab('q')}
 function mTab(t){document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('on',b.dataset.m===t));
   document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.id==='m-'+t))}
 function saveAdmin(){
@@ -1434,6 +1477,12 @@ async function applyFsLink(code){
   FORM.fs={...blankForm('fs'),date,staff,mates:st.filter(x=>x!==staff),start:d.t1||'',end:d.t2||'',cust:d.c||'',travel:d.tr!=null&&d.tr!==''?String(d.tr):'',fsn:d.fsn||'',note:d.no||'',mode:SITE,
     items:(d.it||[]).map(i=>({model:mm(i.m),modelNo:i.n||'',qty:+i.q||1,svc:siteSvcs().includes(i.s)?i.s:'',hours:'',wo:''}))};
   if(!FORM.fs.items.length)FORM.fs.items=[blankItem()];
+  const svs=[...new Set((d.it||[]).map(i=>i.s).filter(Boolean))];
+  if(svs.length<=1){Q.date=date;Q.staff=staff;const cs={fsn:String(d.fsn||'').toUpperCase(),c:d.c||'',d:date,d2:date,t1:d.t1||'',t2:d.t2||'',st:(d.st||[]).slice(),ty:svs[0]||'',tk:[],it:(d.it||[]).map(i=>({f:i.m||'',m:String(i.n||'').toUpperCase(),q:+i.q||1})),ct:''};
+    Q.job={kind:'FS',num:cs.fsn,found:true,cs};const tg=travelGuess(cs.c);
+    Q.f={start:cs.t1,end:cs.t2,cust:cs.c,svc:siteSvcs().includes(svs[0])?svs[0]:'',travel:d.tr!=null&&d.tr!==''?String(d.tr):tg,trGuess:!(d.tr!=null&&d.tr!=='')&&!!tg,items:cs.it.map(i=>({model:famOf(i.m,i.f),modelNo:i.m,qty:i.q})),mates:can('rec.others')?st.filter(x=>x!==staff):[],note:d.no||''};
+    if(!Q.f.items.length)Q.f.items=[{model:'',modelNo:'',qty:1}];qMatchShift();showTab('q');qMsg(`✔ 已從訊息單 ${cs.fsn} 帶入，確認時間和交通後按「✔ 送出」`,'ok');
+    if(me&&st.length&&!st.includes(me))alert(`提醒：這張單排的是 ${st.join('、')}，你目前的身分是 ${me}。`);window.scrollTo({top:0});return}
   matchShift('fs');showTab('fs');paintChips('fs');
   const msg=document.getElementById('fs-msg');msg.className='msg ok';
   msg.textContent=`✔ 已從訊息單 ${d.fsn||''} 帶入。請確認時間、同行人員，並填各台工時後按「＋ 新增」`;
@@ -1443,19 +1492,260 @@ async function applyFsLink(code){
   window.scrollTo({top:0});
 }
 
+// ═══ V3.0 快速報工（一頁）＋訊息單／Repair Shop 資料帶入 ═══
+// 單號判斷：FS 開頭＝訊息單，WO 開頭＝工單；其他＝無單號工作
+const numKind=v=>{v=String(v||'').trim().toUpperCase();return /^FS/.test(v)?'FS':/^WO/.test(v)?'WO':''};
+const fsList=()=>((M().fsPlan||{}).list)||[];
+const woMap=()=>((M().woIdx||{}).map)||{};
+const fsFind=n=>fsList().find(x=>x.fsn===String(n||'').trim().toUpperCase());
+const rsPlanOf=(d,s)=>(((M().rsPlan||{}).list)||[]).filter(x=>x.d===d&&(!s||x.s===s));
+const fsPlanOf=(d,s)=>fsList().filter(x=>x.d<=d&&d<=(x.d2||x.d)&&(!s||(x.st||[]).includes(s)));
+const personRoles=n=>((M().people||[]).find(p=>p.name===n)||{}).roles||[];
+const isFsEng=n=>{const r=personRoles(n);return !r.length||r.includes('eng')||r.includes('chief')};
+const isRsEng=n=>{const r=personRoles(n);return !r.length||r.includes('rs')||r.includes('chief')};
+// 型號 → 機種：先用報工紀錄學到的對照，再用前兩碼最常見的機種
+function famOf(mn,hint){
+  const ms=M().models,k=String(hint||'').toLowerCase(),h=ms.find(m=>m.toLowerCase()===k);if(h)return h;
+  mn=String(mn||'').trim().toUpperCase();if(!mn)return '';
+  const by={},pre={};live().forEach(r=>[...(r.items||[]),r].forEach(i=>{if(i.modelNo&&i.model&&ms.includes(i.model)){const n=String(i.modelNo).toUpperCase();by[n]=i.model;const p=n.slice(0,2);(pre[p]=pre[p]||{})[i.model]=((pre[p]||{})[i.model]||0)+1}}));
+  if(by[mn])return by[mn];const p=pre[mn.slice(0,2)];if(p)return Object.entries(p).sort((a,b)=>b[1]-a[1])[0][0];return ''}
+// 訊息單類型 → 服務項目
+function svcOfCase(c){const sv=siteSvcs(),t=c.ty||'',tk=(c.tk||[]).join(' ');
+  if(sv.includes(t))return t;if(/裝機/.test(tk)&&sv.includes('裝機'))return '裝機';if(/拆機/.test(tk)&&sv.includes('拆機'))return '拆機';
+  if(/保養/.test(t+tk)&&sv.includes('保養'))return '保養';if(/維修|檢修|檢測/.test(t+tk)&&sv.includes('檢修'))return '檢修';return ''}
+// 依距離預估來回交通時數（共用設定客戶的單程分鐘數）
+function travelGuess(cust){const mm=M().custMin||{};const m=mm[cust]??Object.entries(mm).find(([k])=>k&&cust&&(cust.includes(k)||k.includes(cust)))?.[1];
+  if(!(m>0))return '';const h=Math.round(m*2/60*2)/2;return String(Math.max(0.5,h))}
+
+// ── 讀訊息單資料夾（30_FieldService）→ 主檔 fsPlan ──
+const FSCACHE={};
+async function pickFsDir(){
+  if(!('showDirectoryPicker' in window)){alert('請用電腦版 Chrome 或 Edge');return}
+  try{const d=await showDirectoryPicker({mode:'read'});
+    try{await d.getDirectoryHandle('cases')}catch(e){alert(`「${d.name}」裡面沒有 cases 資料夾。\n請選訊息單系統的資料夾（30_FieldService）。`);return}
+    await IDB.set('fsdir',d);const m=await applyFsDir(true);showFileName();alert('已連結訊息單資料夾'+(m||'')+'。\n報工頁會列出排給各人的訊息單。');autoSync()}catch(e){if(e.name!=='AbortError')alert('設定失敗：'+e.message)}}
+async function forgetFsDir(){await IDB.del('fsdir');showFileName()}
+async function dirPerm(h,interactive){let p=await h.queryPermission({mode:'read'});if(p!=='granted'){if(!interactive)return false;p=await h.requestPermission({mode:'read'})}return p==='granted'}
+async function applyFsDir(interactive){
+  const root=await IDB.get('fsdir').catch(()=>null);if(!root)return '';
+  try{if(!await dirPerm(root,interactive))return ' · 訊息單資料夾待授權';
+    const t=today(),lo=addDays(t,-45),hi=addDays(t,30),y=+t.slice(0,4),years=[y,y-1,y+1],list=[];
+    const cases=await root.getDirectoryHandle('cases');
+    for(const yy of years){let dir;try{dir=await cases.getDirectoryHandle(String(yy))}catch(e){continue}
+      for await(const[name,h]of dir.entries()){if(h.kind!=='file'||!/\.json$/i.test(name))continue;
+        const f=await h.getFile();let c=FSCACHE[name];
+        if(!c||c.mod!==f.lastModified){try{c={mod:f.lastModified,j:JSON.parse((await f.text()).replace(/^﻿/,''))}}catch(e){continue}FSCACHE[name]=c}
+        const j=c.j;if(!j||!j.fsn||!j.date)continue;const d2=addDays(j.date,Math.max(1,+j.days||1)-1);
+        if(d2<lo||j.date>hi||/取消|作廢/.test(j.stage||''))continue;
+        const sg=j.signal||{},eq=(sg.equip||[]).filter(e=>e&&(e.model||e.ptype));
+        const it=eq.length?eq.map(e=>({f:e.ptype||'',m:String(e.model||'').toUpperCase(),q:+e.qty||1})):(j.items||[]).map(i=>({f:'',m:String(i.model||'').toUpperCase(),q:+i.qty||1}));
+        list.push({fsn:String(j.fsn).toUpperCase(),c:j.cust||'',d:j.date,d2,t1:j.tStart||'',t2:j.tEnd||'',st:(j.staff||[]).slice(),ty:j.type||'',tk:(sg.tasks||[]).slice(0,4),it,ct:j.content||'',stg:j.stage||''})}}
+    list.sort((a,b)=>(a.d+a.fsn).localeCompare(b.d+b.fsn));
+    if(JSON.stringify(list)!==JSON.stringify(fsList()))setMaster({fsPlan:{at:new Date().toISOString(),list}});
+    return '';
+  }catch(e){return ' · 訊息單資料夾讀取失敗'}}
+// ── 讀 Repair Shop 資料夾（50_RepairShop）→ 工單索引 woIdx＋排程 rsPlan ──
+const RSCACHE={};
+async function pickRsDir(){
+  if(!('showDirectoryPicker' in window)){alert('請用電腦版 Chrome 或 Edge');return}
+  try{const d=await showDirectoryPicker({mode:'read'});
+    try{await d.getDirectoryHandle('jobs')}catch(e){alert(`「${d.name}」裡面沒有 jobs 資料夾。\n請選 Repair Shop 的資料夾（50_RepairShop）。`);return}
+    await IDB.set('rsdir',d);const m=await applyRsDir(true);showFileName();alert('已連結 Repair Shop 資料夾'+(m||'')+'。\n輸入工單號會帶出客戶、型號，並列出排給各人的工單。');autoSync()}catch(e){if(e.name!=='AbortError')alert('設定失敗：'+e.message)}}
+async function forgetRsDir(){await IDB.del('rsdir');showFileName()}
+async function applyRsDir(interactive){
+  const root=await IDB.get('rsdir').catch(()=>null);if(!root)return '';
+  try{if(!await dirPerm(root,interactive))return ' · Repair Shop 資料夾待授權';
+    const map={},jobs=await root.getDirectoryHandle('jobs'),old=Date.now()-120*864e5;
+    for await(const[name,h]of jobs.entries()){if(h.kind!=='file'||!/\.json$/i.test(name))continue;
+      const f=await h.getFile();let c=RSCACHE[name];
+      if(!c||c.mod!==f.lastModified){try{c={mod:f.lastModified,j:JSON.parse((await f.text()).replace(/^﻿/,''))}}catch(e){continue}RSCACHE[name]=c}
+      const j=c.j,s=(j&&j.snap)||{};if(!j||!j.wo)continue;
+      if(/^(OFF|退修|報廢)$/.test(j.u||s.u||'')&&(j.uAt||j.updatedAt||0)<old)continue;
+      map[String(j.wo).toUpperCase()]={c:s.cust||'',n:String(s.model||'').toUpperCase(),t:s.type||'',u:j.u||s.u||''}}
+    if(JSON.stringify(map)!==JSON.stringify(woMap()))setMaster({woIdx:{at:new Date().toISOString(),map}});
+    let pm='';try{const kh=await root.getFileHandle('rs_kiosk.json');const kj=JSON.parse((await (await kh.getFile()).text()).replace(/^﻿/,''));pm=rsPlanFromKiosk(kj)}catch(e){}
+    return pm;
+  }catch(e){return ' · Repair Shop 資料夾讀取失敗'}}
+function rsPlanFromKiosk(j){if(!j||j.app!=='repair-shop-kiosk')return ' · 排程檔內容不正確';
+  const t=today(),lo=addDays(t,-3),hi=addDays(t,10),list=[];
+  for(const [d,es] of Object.entries(j.days||{})){if(d<lo||d>hi)continue;for(const e of es||[])if(e.wo&&!e.task)list.push({d,s:e.staff,wo:e.wo,st:e.station,c:e.cust||'',m:e.model||'',t1:e.start||'',t2:e.end||''})}
+  list.sort((a,b)=>(a.d+a.s+a.st).localeCompare(b.d+b.s+b.st));
+  if(JSON.stringify(list)!==JSON.stringify((M().rsPlan||{}).list||[]))setMaster({rsPlan:{at:j.at||'',list}});return ''}
+// 查單：回傳 {kind,label,c,n,f,found,plan}
+function lookupNum(num,date,staff){
+  const v=String(num||'').trim().toUpperCase(),k=numKind(v);
+  if(k==='FS'){const c=fsFind(v);return {kind:'FS',num:v,found:!!c,cs:c||null}}
+  if(k==='WO'){const w=woMap()[v],pl=rsPlanOf(date,staff).find(x=>x.wo===v),any=(((M().rsPlan||{}).list)||[]).find(x=>x.wo===v);
+    const prev=live().filter(r=>r.wo===v).sort((a,b)=>b.updatedAt-a.updatedAt)[0];
+    const n=(w&&w.n)||(pl&&pl.m)||(any&&any.m)||(prev&&prev.modelNo)||'';
+    return {kind:'WO',num:v,found:!!(w||any||prev),c:(w&&w.c)||(any&&any.c)||'',n,f:(prev&&prev.model)||famOf(n),plan:pl||null,planToday:rsPlanOf(date,staff).length>0||rsPlanOf(date).length>0}}
+  return {kind:'',num:v,found:false}}
+
+// ── 快速報工頁 ──
+const Q={date:'',staff:'',job:null,f:{}};
+function buildQuick(){
+  const el=document.getElementById('p-q');
+  el.innerHTML=`<div class="card qcard"><div class="card-bd">
+    <div class="qrow"><input type="date" class="inp" id="q-date"><button class="btn btn-o btn-s" onclick="qSetDate(today())">今天</button><button class="btn btn-o btn-s" onclick="qSetDate(addDays(Q.date,-1))">前一天</button>
+      <span class="qme" id="q-me"></span></div>
+    <div class="chips qstaff" id="q-staff"></div>
+    <div id="q-jobs"></div>
+    <div class="qnum"><input class="inp" id="q-num" placeholder="輸入單號：FS… 或 WO…" autocomplete="off" autocapitalize="characters">
+      <button class="btn btn-b" onclick="qPickNum(document.getElementById('q-num').value)">帶入</button>
+      <button class="btn btn-o scanbtn" onclick="scanWO('q')">📷</button></div>
+    <div class="qother"><div class="hint">沒有單號的工作</div><div class="chips" id="q-other"></div></div>
+    <div id="q-form"></div>
+    <div class="msg" id="q-msg"></div>
+  </div></div>
+  <div class="card"><div class="card-hd"><h2 id="q-dayTtl">📋 今天的紀錄</h2><span class="hint" id="q-dayTot"></span></div><div class="card-bd" id="q-day"></div></div>`;
+  document.getElementById('q-date').addEventListener('change',e=>qSetDate(e.target.value));
+  const n=document.getElementById('q-num');n.addEventListener('keydown',e=>{if(e.key==='Enter')qPickNum(n.value)});
+  Q.date=today();Q.staff=curName()||myName()||'';
+}
+function qSetDate(d){if(!d)return;Q.date=d;document.getElementById('q-date').value=d;if(Q.job&&Q.job.kind!=='OT')Q.job=null;renderQuick()}
+function qSetStaff(s){Q.staff=s;Q.job=null;renderQuick()}
+function renderQuick(){
+  if(!document.getElementById('q-date'))return;
+  {const qc=document.querySelector('#p-q .qcard');if(qc)qc.classList.toggle('qpicked',!!Q.job)}
+  const me=curName();if(me&&!can('rec.others'))Q.staff=me;if(!Q.staff&&me)Q.staff=me;
+  document.getElementById('q-date').value=Q.date;
+  const lockMe=me&&!can('rec.others');
+  document.getElementById('q-me').innerHTML=lockMe?`👤 <b>${esc(me)}</b>`:'';
+  document.getElementById('q-staff').style.display=lockMe?'none':'';
+  document.getElementById('q-staff').innerHTML=M().staff.map(s=>`<button class="chip ${Q.staff===s?'on':''}" onclick="qSetStaff('${esc(s)}')">${esc(s)}</button>`).join('');
+  // 今天的工作卡片
+  const S=Q.staff,J=document.getElementById('q-jobs');
+  if(!S){J.innerHTML='<div class="hint qhint">先點上面的名字</div>'}
+  else{const fs=fsPlanOf(Q.date,S),rs=rsPlanOf(Q.date,S);
+    const done=live().filter(r=>r.date===Q.date&&r.staff===S);
+    const isDone=(k,v,st)=>done.some(r=>k==='FS'?r.fsn===v:(r.wo===v&&(!st||r.station===st)));
+    let h='';
+    fs.forEach(c=>{h+=`<button class="qjob fs ${Q.job&&Q.job.num===c.fsn?'on':''}" onclick="qPickNum('${esc(c.fsn)}')"><span class="qk">🚐 訊息單</span><b>${esc(c.c)}</b><small>${esc(c.ct||c.ty)}</small><small>${esc(c.t1)}–${esc(c.t2)}${(c.st||[]).length>1?' · '+esc(c.st.join('、')):''}</small>${isDone('FS',c.fsn)?'<span class="qdone">✔ 已報</span>':''}</button>`});
+    rs.forEach(p=>{h+=`<button class="qjob rs ${Q.job&&Q.job.num===p.wo&&Q.f.station===p.st?'on':''}" onclick="qPickNum('${esc(p.wo)}','${esc(p.st)}','${esc(p.t1||'')}','${esc(p.t2||'')}')"><span class="qk">🔧 ${esc(p.st)}</span><b>${esc(p.c)} ${esc(p.m)}</b><small>${esc(p.wo)}</small>${p.t1?`<small>${esc(p.t1)}–${esc(p.t2)}</small>`:''}${isDone('WO',p.wo,p.st)?'<span class="qdone">✔ 已報</span>':''}</button>`});
+    J.innerHTML=h?`<div class="hint">📅 ${Q.date===today()?'今天':md(Q.date)} 排給 ${esc(S)} 的工作（點一下帶入）</div><div class="qjobs">${h}</div>`:`<div class="hint qhint">${md(Q.date)} 沒有排給 ${esc(S)} 的訊息單或工單，請輸入單號或選下面的工作</div>`}
+  // 無單號工作
+  const oth=wsTypes().filter(t=>!['WS'].includes(code(t)));
+  document.getElementById('q-other').innerHTML=oth.map(t=>`<button class="chip ${Q.job&&Q.job.kind==='OT'&&Q.f.type===t?'on':''}" onclick="qPickOther('${esc(t)}')">${esc(code(t))}<small>${esc(t.split(' ').slice(1).join(' '))}</small></button>`).join('')
+    +(!S||isFsEng(S)?`<button class="chip ${Q.job&&Q.job.kind==='OT'&&Q.f.svc==='廠內作業'?'on':''}" onclick="qPickOther('','廠內作業')">廠內作業<small>廠外人員</small></button>`:'');
+  renderQForm();renderQDay();
+}
+function qMsg(t,cls){const m=document.getElementById('q-msg');m.className='msg '+(cls||'');m.textContent=t||''}
+function qPickNum(v,st,t1,t2){
+  v=String(v||'').trim().toUpperCase();qMsg('');
+  if(!Q.staff){qMsg('⚠ 先點上面的名字','bad');return}
+  const k=numKind(v);if(!k){qMsg('⚠ 單號要 FS 或 WO 開頭；沒有單號的工作請選下面的按鈕','bad');return}
+  const L=lookupNum(v,Q.date,Q.staff);Q.job=L;document.getElementById('q-num').value=v;
+  if(k==='FS'){const c=L.cs||{};const svc=c.it?svcOfCase(c):'';
+    const it=(c.it||[]).map(i=>({model:famOf(i.m,i.f),modelNo:i.m,qty:i.q||1}));
+    Q.f={start:c.t1||'',end:c.t2||'',cust:c.c||'',svc,travel:travelGuess(c.c),trGuess:!!travelGuess(c.c),items:it.length?it:[{model:'',modelNo:'',qty:1}],
+      mates:can('rec.others')?(c.st||[]).filter(x=>x!==Q.staff&&M().staff.includes(x)):[],note:''}}
+  else{const pl=L.plan&&(!st||L.plan.st===st)?L.plan:rsPlanOf(Q.date,Q.staff).find(x=>x.wo===v&&(!st||x.st===st));
+    Q.f={station:st||(pl&&pl.st)||'',start:t1||(pl&&pl.t1)||'',end:t2||(pl&&pl.t2)||'',model:L.f||'',modelNo:L.n||'',cust:L.c||'',unpl:L.planToday&&!pl,note:''}}
+  qMatchShift();renderQuick();setTimeout(()=>{const s=document.getElementById('q-form');s&&s.scrollIntoView({behavior:'smooth',block:'start'})},50)}
+function qPickOther(type,svc){qMsg('');if(!Q.staff){qMsg('⚠ 先點上面的名字','bad');return}
+  Q.job={kind:'OT',num:''};Q.f={type:type||'',svc:svc||'',start:'',end:'',note:''};document.getElementById('q-num').value='';renderQuick()}
+function qMatchShift(){Q.f.shift=Object.keys(M().shifts).find(k=>M().shifts[k][0]===Q.f.start&&M().shifts[k][1]===Q.f.end)||''}
+function qSet(k,v){if((k==='station'||k==='svc'||k==='travel')&&String(Q.f[k])===String(v)&&k!=='svc')v='';
+  Q.f[k]=v;if(k==='shift'&&M().shifts[v]){Q.f.start=M().shifts[v][0];Q.f.end=M().shifts[v][1]}if(k==='travel')Q.f.trGuess=false;renderQForm()}
+function qTogMate(n){const a=Q.f.mates||[];Q.f.mates=a.includes(n)?a.filter(x=>x!==n):[...a,n];renderQForm()}
+function renderQForm(){
+  const box=document.getElementById('q-form');if(!box)return;const J=Q.job,F=Q.f;
+  if(!J){box.innerHTML='';return}
+  const chips=(k,opts,lab)=>opts.map(o=>`<button class="chip ${String(F[k])===String(o)?'on':''}" onclick="qSet('${k}','${esc(o)}')">${lab?lab(o):esc(o)}</button>`).join('');
+  const time=`<div class="qf"><label class="req">時間</label><div><div class="chips" id="q-shift">${chips('shift',Object.keys(M().shifts))}</div>
+    <div class="qrow" style="margin-top:6px"><input class="inp t" id="q-start" value="${esc(F.start)}" placeholder="開始" inputmode="numeric"> – <input class="inp t" id="q-end" value="${esc(F.end)}" placeholder="結束" inputmode="numeric"><span class="qcalc" id="q-calc"></span></div></div></div>`;
+  let head='',body='';
+  if(J.kind==='FS'){const c=J.cs;
+    head=c?`<div class="qinfo fs"><span class="qk">🚐 ${esc(J.num)}</span><b>${esc(c.c)}</b><div>${esc(c.ct||c.ty)}</div><div class="hint">排定 ${md(c.d)}${c.d2&&c.d2!==c.d?'–'+md(c.d2):''} ${esc(c.t1)}–${esc(c.t2)} · ${esc((c.st||[]).join('、'))}</div></div>`
+      :`<div class="qinfo warn"><span class="qk">🚐 ${esc(J.num)}</span><b>查不到這張訊息單</b><div class="hint">${fsList().length?'可能是單號打錯，或這台裝置還沒同步到最新訊息單。':'這台裝置沒有訊息單資料（手機請用派工連結）。'}仍可報工，客戶和設備請自己填。</div></div>`;
+    body=`${time}
+    <div class="qf"><label class="req">服務項目</label><div class="chips">${chips('svc',siteSvcs())}</div></div>
+    <div class="qf"><label>交通時數</label><div><div class="chips">${chips('travel',TRAVEL_OPTS.map(String))}<input class="inp t" id="q-trv" value="${TRAVEL_OPTS.map(String).includes(String(F.travel))?'':esc(F.travel)}" placeholder="其他" inputmode="decimal"></div>${F.trGuess?'<div class="hint">已依客戶距離預估，請改成實際</div>':''}</div></div>
+    ${c?'':`<div class="qf"><label class="req">客戶</label><input class="inp" id="q-cust" list="custList" value="${esc(F.cust)}"></div>`}
+    <div class="qf"><label>設備</label><div class="qitems">${(F.items||[]).map((i,k)=>`<span class="qit">${esc(i.model||'')} <b>${esc(i.modelNo||'—')}</b>${i.qty>1?' ×'+i.qty:''}</span>`).join('')}
+      <button class="btn btn-o btn-s" onclick="qToDetail()">✎ 設備或各台工時不同</button><div class="hint">現場工時依台數自動分到各台</div></div></div>
+    ${(M().staff.length>1&&can('rec.others'))?`<div class="qf"><label>同行人員</label><div class="chips">${M().staff.filter(x=>x!==Q.staff).map(x=>`<button class="chip ${(F.mates||[]).includes(x)?'on':''}" onclick="qTogMate('${esc(x)}')">${esc(x)}</button>`).join('')}<div class="hint" style="flex-basis:100%">勾起來的人各存一筆一樣的紀錄</div></div></div>`:''}`}
+  else if(J.kind==='WO'){
+    head=J.found?`<div class="qinfo rs"><span class="qk">🔧 ${esc(J.num)}${F.unpl?' <span class="qunpl">計畫外</span>':''}</span><b>${esc(J.c||'')} ${esc(F.modelNo||'')}</b>${F.model?`<div class="hint">${esc(F.model)}</div>`:''}</div>`
+      :`<div class="qinfo warn"><span class="qk">🔧 ${esc(J.num)}${F.unpl?' <span class="qunpl">計畫外</span>':''}</span><b>查不到這張工單</b><div class="hint">${Object.keys(woMap()).length?'可能是單號打錯，或 Repair Shop 還沒建這張工單。':'這台裝置沒有 Repair Shop 工單資料。'}仍可報工，請確認型號。</div></div>`;
+    const wcErr=woCheck(J.num);
+    body=`${wcErr?`<div class="qinfo warn">⚠ ${esc(wcErr)}</div>`:''}<div class="qf"><label class="req">站別</label><div class="chips">${chips('station',M().stations)}</div></div>${time}
+    <div class="qf"><label>型號</label><div class="qrow"><input class="inp" id="q-mn" value="${esc(F.modelNo)}" placeholder="例如 RA0100F" style="width:160px"><div class="chips" id="q-model">${chips('model',M().models)}</div></div></div>`}
+  else{const lbl=F.svc||F.type;head=`<div class="qinfo"><span class="qk">${esc(code(lbl)||lbl)}</span><b>${esc(F.svc||F.type.split(' ').slice(1).join(' '))}</b></div>`;body=time}
+  const noteReq=(J.kind==='OT'&&(code(F.type)==='OTH'))||(J.kind==='FS'&&F.svc==='其他');
+  box.innerHTML=`<div class="qsel">${head}${body}
+    <div class="qf"><label class="${noteReq?'req':''}">備註</label><input class="inp" id="q-note" value="${esc(F.note)}" placeholder="${noteReq?'做了什麼（必填）':'選填'}"></div>
+    <div class="qact"><button class="btn btn-p qsave" onclick="qSave()">✔ 送出</button><button class="btn btn-o" onclick="Q.job=null;renderQuick()">取消</button></div></div>`;
+  const bindT=(id,k)=>{const i=document.getElementById(id);if(!i)return;i.addEventListener('input',()=>{F[k]=i.value;if(k==='start'||k==='end'){F.shift='';qCalc()}});
+    if(k==='start'||k==='end')i.addEventListener('blur',()=>{const n=normTime(i.value);if(n===null){i.classList.add('err');return}i.classList.remove('err');if(n){i.value=n;F[k]=n}qMatchShift();qPaint('q-shift','shift');qCalc()})};
+  bindT('q-start','start');bindT('q-end','end');bindT('q-note','note');bindT('q-cust','cust');
+  const mn=document.getElementById('q-mn');if(mn)mn.addEventListener('change',()=>{F.modelNo=mn.value.trim().toUpperCase();mn.value=F.modelNo;if(!F.model){F.model=famOf(F.modelNo);qPaint('q-model','model')}});
+  const tv=document.getElementById('q-trv');if(tv)tv.addEventListener('input',()=>{const v=tv.value.trim();if(v===''||(/^\d+(\.\d+)?$/.test(v)&&+v<24)){tv.classList.remove('err');F.travel=v===''?'':String(+v);F.trGuess=false}else tv.classList.add('err')});
+  qCalc()}
+function qPaint(id,k){const b=document.getElementById(id);if(b)b.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===String(Q.f[k]||'')))}
+function qCalc(){const el=document.getElementById('q-calc');if(!el)return;const h=hoursOf(Q.f);el.textContent=h?`${fmt1(h)} h`+(Q.job&&Q.job.kind==='FS'&&+Q.f.travel?`（現場 ${fmt1(h-Q.f.travel)}）`:''):''}
+// 現場工時依台數分到各台（0.5 為單位，最後一台補差）
+function splitHours(items,on){const q=items.reduce((a,i)=>a+(+i.qty||1),0);let rest=on;
+  return items.map((it,k)=>{let v;if(k===items.length-1)v=r1(rest);else{v=Math.round(on*(+it.qty||1)/q*2)/2;rest-=v}return {...it,hours:v}})}
+function qBuild(){
+  const J=Q.job,F=Q.f;['start','end'].forEach(k=>{const n=normTime(F[k]);if(n)F[k]=n});qMatchShift();
+  const base={id:null,date:Q.date,staff:Q.staff,shift:F.shift||'',start:F.start,end:F.end,note:String(F.note||'').trim(),wo:'',station:'',cust:'',travel:'',svc:'',model:'',modelNo:''};
+  if(J.kind==='FS'){const h=hoursOf({...base}),tr=F.travel===''?0:+F.travel,on=r1(h-tr);
+    const items=splitHours((F.items||[]).filter(i=>i.model||i.modelNo).map(i=>({model:i.model||'',modelNo:String(i.modelNo||'').toUpperCase(),qty:+i.qty||1,svc:F.svc||'',wo:''})),on);
+    return {...base,kind:'FS',type:fsType(),cust:String(F.cust||'').trim(),travel:tr,svc:F.svc||'',items,model:(items[0]||{}).model||'',modelNo:(items[0]||{}).modelNo||'',fsn:J.num}}
+  if(J.kind==='WO'){const t=M().types.find(x=>code(x)==='WS')||'WS 工單維修';
+    return {...base,kind:'WS',type:t,wo:J.num,station:F.station||'',model:F.model||'',modelNo:String(F.modelNo||'').toUpperCase(),...(F.unpl?{unpl:true}:{})}}
+  if(F.svc==='廠內作業')return {...base,kind:'FS',type:fsType(),svc:'廠內作業',travel:0,items:[],fsn:''};
+  return {...base,kind:'WS',type:F.type}}
+function qSave(){
+  const J=Q.job;if(!J)return;const F=Q.f;
+  if(J.kind==='FS'&&!(F.items||[]).some(i=>i.model||i.modelNo)){qMsg('⚠ 設備是空的，請按「✎ 設備或各台工時不同」填寫','bad');return}
+  const rec=qBuild();const mates=J.kind==='FS'?(F.mates||[]):[];
+  const r=commitRec(rec,mates,(t,c)=>qMsg(t,c));if(!r)return;
+  Q.job=null;Q.f={};document.getElementById('q-num').value='';renderQuick();
+  const d=document.getElementById('q-day');d&&d.scrollIntoView({behavior:'smooth',block:'start'})}
+// 共用存檔（快速頁用；規則同 saveForm）
+function commitRec(rec,mates,say){
+  let err=checkRec(rec);if(err){say('⚠ '+err,'bad');return null}
+  if((mates||[]).length&&!can('rec.others')){say('⚠ 目前身分不能替同事報工','bad');return null}
+  if(!mayTouch(rec.staff)){say('⚠ 沒有權限','bad');return null}
+  const we=woCheck(rec.wo);if(we&&!confirm('⚠ '+we+'\n\n確定這個工單號沒打錯、仍要儲存嗎？')){say('⚠ '+we,'bad');return null}
+  const now=Date.now();let warn=overlapWarn(rec);const people=[rec.staff,...(mates||[]).filter(x=>x!==rec.staff)];const grp=people.length>1?uid():'';
+  people.forEach(p=>{const r={...rec,staff:p,id:uid(),createdAt:now,updatedAt:now,...(grp?{grp}:{})};if(p!==rec.staff){const w=overlapWarn(r);if(w)warn=(warn?warn+'；':'')+p+' '+w}DB.records.push(r)});
+  persist();say(`✔ 已送出：${people.join('、')} ${md(rec.date)} ${fmt1(hoursOf(rec))}h`+(warn?'　'+warn:''),warn?'warn':'ok');
+  renderAll();if(formUrl())uploadClick();else autoSync();return true}
+// 快速頁 → 廠外明細頁（多台工時不同、設備要改時）
+function qToDetail(){const J=Q.job,F=Q.f,r=qBuild();
+  FORM.fs={...blankForm('fs'),date:Q.date,staff:Q.staff,start:r.start,end:r.end,shift:r.shift,cust:r.cust,travel:F.travel===''?'':String(F.travel),fsn:J.num,note:r.note,mode:SITE,mates:(F.mates||[]).slice(),
+    items:(F.items||[]).map(i=>({model:i.model||'',modelNo:i.modelNo||'',qty:+i.qty||1,svc:F.svc||'',hours:'',wo:''}))};
+  if(!FORM.fs.items.length)FORM.fs.items=[blankItem()];
+  showTab('fs');paintChips('fs');const msg=document.getElementById('fs-msg');msg.className='msg ok';msg.textContent='已從快速報工帶入，請修改設備和各台工時後按「＋ 新增」';window.scrollTo({top:0})}
+function renderQDay(){
+  const box=document.getElementById('q-day');if(!box)return;const S=Q.staff;
+  document.getElementById('q-dayTtl').textContent=`📋 ${S?esc(S)+' ':''}${Q.date===today()?'今天':md(Q.date)}的紀錄`;
+  if(!S){box.innerHTML='<div class="hint">選了人員後，這裡會列出他這天報的工</div>';document.getElementById('q-dayTot').textContent='';return}
+  const rs=live().filter(r=>r.date===Q.date&&r.staff===S).sort((a,b)=>a.start.localeCompare(b.start));
+  const tot=rs.reduce((a,r)=>a+hoursOf(r),0);document.getElementById('q-dayTot').textContent=rs.length?`共 ${rs.length} 筆 · ${fmt1(tot)} h`:'';
+  box.innerHTML=rs.length?rs.map(r=>{const c=code(r.type),k=r.kind.toLowerCase();
+    const what=r.kind==='FS'?([r.cust,r.svc].filter(Boolean).join(' · ')||r.note):c==='WS'?[r.station,r.modelNo||r.model].filter(Boolean).join(' · '):(r.type.split(' ').slice(1).join(' '));
+    const num=r.fsn||r.wo||'';
+    return `<div class="qday">${tagHTML(r.type)}<div class="qd1"><b>${r.start}–${r.end}</b> ${esc(what)}${r.unpl?' <span class="qunpl">計畫外</span>':''}<div class="hint">${esc(num)}${num&&r.note?' · ':''}${esc(r.note||'')}</div></div><span class="qh">${fmt1(hoursOf(r))}h</span>
+      <button class="ib" title="修改" onclick="editRec('${k}','${r.id}');showTab('${k}')">✎</button><button class="ib del" title="刪除" onclick="delRec('${r.id}')">✕</button></div>`}).join('')
+    :'<div class="hint">還沒有紀錄</div>'}
+
 // ═══ 共用 ═══
 function showTab(p){document.querySelectorAll('.tab[data-p]').forEach(t=>t.classList.toggle('active',t.dataset.p===p));
   document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='p-'+p));
-  if(p==='board')renderBoard(); if(p==='rpt')renderReport()}
+  if(p==='q')renderQuick(); if(p==='rpt')renderReport()}
 function renderAll(full){
   if(full){paintAllChips('ws');paintAllChips('fs')}
   const wos=[...new Set(live().filter(r=>r.wo).sort((a,b)=>b.updatedAt-a.updatedAt).map(r=>r.wo))].slice(0,200);
   document.getElementById('woList').innerHTML=wos.map(w=>`<option value="${esc(w)}">`).join('');
   document.getElementById('custList').innerHTML=M().customers.map(c=>`<option value="${esc(c)}">`).join('');
-  renderList('ws');renderList('fs');renderBoard();renderReport();
+  renderList('ws');renderList('fs');renderQuick();renderReport();
 }
 document.body.insertAdjacentHTML('beforeend','<datalist id="woList"></datalist><datalist id="custList"></datalist>');
-buildPage('ws');buildPage('fs');
+buildQuick();buildPage('ws');buildPage('fs');
 document.getElementById('bDate').value=today();
 document.getElementById('rMonth').value=today().slice(0,7);
 renderAll(true); applyRole(); applyPerm();

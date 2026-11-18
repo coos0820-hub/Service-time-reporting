@@ -144,6 +144,7 @@ body.station .notstation{display:none!important}
 .qjob{position:relative;text-align:left;border:1.5px solid var(--border);border-left:5px solid var(--blue);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:1px;font-family:inherit;font-size:13px}
 .qjob.fs{border-left-color:var(--green2)}.qjob.on{background:#E3F2FD;border-color:var(--blue)}
 .qjob b{font-size:14px}.qjob small{color:var(--grey2);font-size:11.5px}
+.qjob small.qct{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .qk{font-size:11px;font-weight:800;color:var(--grey2)}
 .qdone{position:absolute;right:8px;top:6px;font-size:11px;color:var(--green2);font-weight:800}
 .qnum{display:flex;gap:6px;margin:8px 0}.qnum .inp{flex:1;min-width:0;font-size:15px;text-transform:uppercase}
@@ -158,6 +159,7 @@ body.station .notstation{display:none!important}
 .qitems{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.qit{background:#fff;border:1px solid var(--border);border-radius:6px;padding:3px 8px}
 .qitems .hint{flex-basis:100%}
 .qact{display:flex;gap:8px;margin-top:10px}.qsave{flex:1;max-width:320px;font-size:16px;padding:10px}
+.qdel{margin-top:8px}.qdel summary{cursor:pointer;color:var(--grey2);font-size:12px}
 .qday{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--grey4);padding:7px 0}.qd1{flex:1;min-width:0}.qh{font-weight:800;white-space:nowrap}
 @media(max-width:700px){
   .qcard .card-bd{padding:10px}.qjobs{grid-template-columns:1fr}.qjob{padding:10px 12px}.qjob b{font-size:16px}
@@ -169,7 +171,7 @@ body.station .notstation{display:none!important}
 </head>
 <body>
 <div class="ph">
-  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V3.0<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
+  <div><h1>報工系統<span class="h1en">Service Time Reporting</span></h1><div class="sub">台灣普熙 技術服務部 · 廠內 Workshop ／ 廠外 Field Service · V3.2<span class="role-tag" id="roleTag" style="display:none">報工電腦</span></div></div>
   <div class="right"><span class="sync-st" id="syncSt">尚未設定共用檔</span><button class="sync-btn" id="upBtn" style="display:none;background:#6A1B9A" onclick="uploadClick()">📤 上傳</button><button class="sync-btn" id="whoBtn" style="display:none;background:rgba(255,255,255,.15)" onclick="whoDlg()" title="切換身分"></button><button class="sync-btn" id="syncBtn" onclick="syncNow(true)">🔄 同步</button><button class="sync-btn" style="background:rgba(255,255,255,.15)" title="使用說明" onclick="showWizard('help')">❓</button></div>
 </div>
 <div class="tabs">
@@ -212,6 +214,7 @@ body.station .notstation{display:none!important}
     <button class="mtab" data-m="time" onclick="mTab('time')">時段</button>
     <button class="mtab" data-m="sync" onclick="mTab('sync')">同步共用檔</button>
     <button class="mtab" data-m="data" onclick="mTab('data')">資料備份</button>
+    <button class="mtab" data-m="trash" onclick="mTab('trash')">🗑 回收筒</button>
     <button class="mtab" data-m="perm" onclick="mTab('perm')">權限</button>
   </div>
   <div class="mp" id="m-list">
@@ -303,6 +306,11 @@ body.station .notstation{display:none!important}
     <div class="hint" id="permNote" style="margin-bottom:8px"></div>
     <div style="overflow:auto"><table class="dt" id="permTbl"></table></div>
     <div class="row" style="margin-top:10px"><button class="btn btn-o btn-s" onclick="permDefault()">恢復預設值</button><button class="btn btn-b btn-s" onclick="permSave()">💾 儲存權限</button></div></div>
+  <div class="mp" id="m-trash">
+    <div class="row" style="margin-bottom:8px"><input class="inp" id="trQ" placeholder="搜尋人員／單號／客戶／備註" style="width:240px" oninput="renderTrash()">
+      <select class="inp" id="trD" onchange="renderTrash()"><option value="30">最近 30 天刪除</option><option value="90" selected>最近 90 天刪除</option><option value="3650">全部</option></select></div>
+    <div style="overflow:auto"><table class="dt" id="trTbl"></table></div>
+    <p class="hint" style="margin-top:6px">刪除的紀錄不會真的消失，在這裡可以還原；還原後會同步到所有裝置。紀錄本人也可以在「⚡ 報工」頁下方還原自己剛刪的紀錄。</p></div>
   <div class="mp" id="m-data">
     <div class="row" style="margin-bottom:12px">
       <button class="btn btn-b btn-s" onclick="downloadJSON()">⬇ 下載備份 JSON</button>
@@ -756,8 +764,25 @@ function cancelEdit(kind){FORM[kind]=blankForm(kind);document.getElementById(kin
 function delRec(id){
   const r=DB.records.find(x=>x.id===id); if(!r) return; if(!mayTouch(r.staff)) return;
   if(!confirm(`刪除這筆？\n${r.date} ${r.staff} ${r.start}–${r.end} ${r.type}`)) return;
-  r.deleted=true; r.updatedAt=Date.now(); persist(); renderAll(); if(formUrl()) uploadClick(); else autoSync();
+  const now=Date.now(); r.deleted=true; r.updatedAt=now; r.deletedAt=now; r.deletedBy=curName()||myName()||(isStation()?'報工電腦':'');
+  persist(); renderAll(); if(formUrl()) uploadClick(); else autoSync();
 }
+// ═══ 回收筒 ═══
+const canRestore=r=>can('rec.others')||(curName()&&curName()===r.staff);
+function restoreRec(id){const r=DB.records.find(x=>x.id===id);if(!r||!r.deleted)return;
+  if(!canRestore(r)){alert('只有管理者或紀錄本人可以還原');return}
+  if(!confirm(`還原這筆？\n${r.date} ${r.staff} ${r.start}–${r.end} ${r.type}`))return;
+  const now=Date.now();r.deleted=false;r.updatedAt=now;r.restoredAt=now;r.restoredBy=curName()||myName()||(isStation()?'報工電腦':'');
+  const w=overlapWarn(r);persist();renderAll();renderTrash();if(formUrl())uploadClick();else autoSync();if(w)alert('已還原。'+w)}
+const fdt=t=>{if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())};
+const recWhat=r=>r.kind==='FS'?([r.cust,r.svc].filter(Boolean).join(' · ')||r.note||''):code(r.type)==='WS'?[r.station,r.modelNo||r.model].filter(Boolean).join(' · '):(r.note||r.type.split(' ').slice(1).join(' '));
+function renderTrash(){const t=document.getElementById('trTbl');if(!t)return;
+  const q=(document.getElementById('trQ').value||'').trim().toLowerCase(),days=+document.getElementById('trD').value||90,lim=Date.now()-days*864e5;
+  const rs=DB.records.filter(r=>r.deleted&&(r.deletedAt||r.updatedAt||0)>=lim&&(!q||[r.staff,r.wo,r.fsn,r.cust,r.note,r.deletedBy,r.modelNo].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>(b.deletedAt||b.updatedAt||0)-(a.deletedAt||a.updatedAt||0));
+  t.innerHTML='<tr><th>刪除時間</th><th>刪除人</th><th>報工日</th><th>人員</th><th>類型</th><th>時間</th><th>單號</th><th>內容</th><th class="n">工時</th><th></th></tr>'+
+    (rs.length?rs.map(r=>`<tr><td>${fdt(r.deletedAt||r.updatedAt)}</td><td>${esc(r.deletedBy||'—')}</td><td>${md(r.date)}</td><td>${esc(r.staff)}</td><td>${tagHTML(r.type)}</td><td>${r.start}–${r.end}</td><td>${esc(r.fsn||r.wo||'')}</td><td>${esc(recWhat(r))}</td><td class="n">${fmt1(hoursOf(r))}</td>
+      <td>${canRestore(r)?`<button class="btn btn-o btn-s" onclick="restoreRec('${r.id}')">↺ 還原</button>`:''}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">沒有刪除的紀錄</td></tr>')}
 const mdl=r=>{if(Array.isArray(r.items)&&r.items.length)return r.items.map(i=>esc([i.modelNo||i.model,i.qty>1?'×'+i.qty:''].join(''))+` <span class="hint">${esc(i.svc)} ${i.hours}h</span>`).join('<br>');return [r.model,r.modelNo].filter(Boolean).map(esc).join(' ')||'<span class="hint">-</span>'};
 function tagHTML(t){const c=code(t);return `<span class="tag" style="background:${TYPE_COLOR[c]||'#546E7A'}">${esc(c)}</span>`}
 function renderList(kind){
@@ -872,6 +897,12 @@ function renderReport(){
   sKeys.forEach(v=>{h+=sRow('<b>'+esc(v)+'</b>',Object.values(sg[v]).flat(),'tot',false);
     Object.keys(sg[v]).sort().forEach(m=>h+=sRow(esc(m),sg[v][m],'',true))});
   h+=`</table></div><div class="hint" style="margin-top:4px">人次 = 報工筆數；兩人同行做同一件工作會算 2 人次。一次做多台時，每台各算 1 人次，工時用各台自己填的工時，交通依工時比例分攤。</div>`;
+  {const t=today(),fsLo=[addDays(t,-45),(M().fsPlan||{}).since||t].sort()[1],woLo=[addDays(t,-90),(M().woIdx||{}).since||t].sort()[1],wm=woMap(),rl=((M().rsPlan||{}).list)||[],hasFs=fsList().length>0,hasWo=Object.keys(wm).length>0;
+    const nf=monthRecs().flatMap(r=>{const o=[];
+      if(hasFs&&r.fsn&&r.date>=fsLo&&!fsFind(r.fsn))o.push({r,n:r.fsn,k:'訊息單'});
+      const ws=[...new Set([r.wo,...(r.items||[]).map(i=>i.wo)].filter(Boolean).map(w=>String(w).toUpperCase()))];
+      if(hasWo&&r.date>=woLo)ws.forEach(w=>{if(/^WO/.test(w)&&!wm[w]&&!rl.some(x=>x.wo===w))o.push({r,n:w,k:'工單'})});return o});
+    if(hasFs||hasWo)h+=`<div class="box ${nf.length?'y':''}" style="margin-top:14px"><b>⑦ 單號核對：查不到的訊息單／工單 ${nf.length} 筆</b><p>${nf.length?nf.map(x=>`${x.r.date} ${esc(x.r.staff)} ${x.k} <b>${esc(x.n)}</b>（${esc(x.r.cust||x.r.modelNo||x.r.station||'')}）`).join('<br>'):'本月報工的單號都查得到。'}</p><div class="hint">從 ${md((M().woIdx||{}).since||(M().fsPlan||{}).since||t)} 連結資料夾後的報工才比對（訊息單近 45 天、工單近 90 天）；查不到通常是單號打錯，請到明細頁修改。</div></div>`}
   if(bad.length) h+=`<div class="box r" style="margin-top:14px"><b>待修正 ${bad.length} 筆</b><p>${bad.map(r=>`${r.date} ${esc(r.staff)} ${r.start}–${r.end}：${esc(checkRec(r))}`).join('<br>')}</p></div>`;
   document.getElementById('rBody').innerHTML=h;
 }
@@ -926,7 +957,7 @@ async function showFileName(){const h=await IDB.get('file').catch(()=>null);cons
   const mn=document.getElementById('meName');if(mn)mn.textContent=myName()||'未設定（共用）';
   const sh=await IDB.get('spbak').catch(()=>null);const so=document.getElementById('spOn');if(so)so.checked=spOn()&&!!sh;
   const ss=document.getElementById('spSt');if(ss)ss.textContent=sh?`${sh.name}${spOn()?' · 已啟用':' · 已停用'}${localStorage.getItem('svc_report_sp_time')?' · 上次 '+localStorage.getItem('svc_report_sp_time'):''}`:'（未設定）';
-  const rph=await IDB.get('rsplan').catch(()=>null);const rpe=document.getElementById('rsPlanName');if(rpe){const L=(M().rsPlan||{}).list||[];rpe.textContent=(rph?rph.name+' · ':'')+(L.length?'主檔內有 '+L.length+' 筆排程（'+(M().rsPlan.at?new Date(M().rsPlan.at).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'')+'）':rph?'尚未讀到排程':'未設定')}
+  const rph=await IDB.get('rsplan').catch(()=>null);const rpe=document.getElementById('rsPlanName');if(rpe){const L=(M().rsPlan||{}).list||[];rpe.textContent=rph?rph.name+' · '+(L.length?'主檔內有 '+L.length+' 筆排程':'尚未讀到排程'):'未設定'+(L.length?'（排程 '+L.length+' 筆由 Repair Shop 資料夾或其他電腦提供，這裡不用設）':'')}
   const fdh=await IDB.get('fsdir').catch(()=>null);const fde=document.getElementById('fsDirName');if(fde)fde.textContent=(fdh?fdh.name+' · ':'')+(fsList().length?'主檔內有 '+fsList().length+' 張訊息單':fdh?'尚未讀到':'未設定');
   const rdh=await IDB.get('rsdir').catch(()=>null);const rde=document.getElementById('rsDirName');if(rde)rde.textContent=(rdh?rdh.name+' · ':'')+(Object.keys(woMap()).length?'主檔內有 '+Object.keys(woMap()).length+' 張工單':rdh?'尚未讀到':'未設定');
   const shh=await IDB.get('shset').catch(()=>null);const sse=document.getElementById('shSetName');
@@ -1381,7 +1412,7 @@ function whoDlg(){const L=repPeople(),grp=r=>L.filter(p=>roleOfP(p)===r);
 function afterWho(){paintWho();applyPerm();Q.staff=curName()||Q.staff;Q.job=null;const me=curName();if(me)['ws','fs'].forEach(k=>{if(FORM[k]&&!FORM[k].id){FORM[k].staff=me;paintChips(k)}})}
 function applyPerm(){const rt=document.querySelector('.tab[data-p="rpt"]');if(rt)rt.style.display=can('rpt.view')?'':'none';
   if(!can('rpt.view')&&document.getElementById('p-rpt').classList.contains('active'))showTab('q');paintWho();renderQuick()}
-const ADM_TABS=[['shared','set.list'],['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['perm','set.perm']];
+const ADM_TABS=[['shared','set.list'],['list','set.list'],['time','set.time'],['sync','set.sync'],['data','set.data'],['trash','set.data'],['perm','set.perm']];
 function admTabs(){return ADM_TABS.filter(t=>can(t[1])).map(t=>t[0])}
 function renderPerm(){const t=document.getElementById('permTbl');if(!t)return;const pm=M().perms||{};
   document.getElementById('permNote').innerHTML=authOn()?'':'<b>共用設定還沒有人員名單（或這台還沒讀到），登入功能尚未啟用；目前只有「管理者」（管理密碼）與「其他」兩種身分。</b>';
@@ -1409,7 +1440,7 @@ function openAdminReal(){
 }
 function closeAdmin(){const p=document.getElementById('p-adm');if(p&&p.classList.contains('active'))showTab('q')}
 function mTab(t){document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('on',b.dataset.m===t));
-  document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.id==='m-'+t))}
+  document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.id==='m-'+t));if(t==='trash')renderTrash()}
 function saveAdmin(){
   const lines=id=>[...new Set(document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean))];
   const staff=lines('mStaff'),types=lines('mType'),stations=lines('mStation'),customers=lines('mCust'),models=lines('mModel'),services=lines('mSvc');
@@ -1541,7 +1572,7 @@ async function applyFsDir(interactive){
         const it=eq.length?eq.map(e=>({f:e.ptype||'',m:String(e.model||'').toUpperCase(),q:+e.qty||1})):(j.items||[]).map(i=>({f:'',m:String(i.model||'').toUpperCase(),q:+i.qty||1}));
         list.push({fsn:String(j.fsn).toUpperCase(),c:j.cust||'',d:j.date,d2,t1:j.tStart||'',t2:j.tEnd||'',st:(j.staff||[]).slice(),ty:j.type||'',tk:(sg.tasks||[]).slice(0,4),it,ct:j.content||'',stg:j.stage||''})}}
     list.sort((a,b)=>(a.d+a.fsn).localeCompare(b.d+b.fsn));
-    if(JSON.stringify(list)!==JSON.stringify(fsList()))setMaster({fsPlan:{at:new Date().toISOString(),list}});
+    if(JSON.stringify(list)!==JSON.stringify(fsList())||!(M().fsPlan||{}).since)setMaster({fsPlan:{at:new Date().toISOString(),since:(M().fsPlan||{}).since||today(),list}});
     return '';
   }catch(e){return ' · 訊息單資料夾讀取失敗'}}
 // ── 讀 Repair Shop 資料夾（50_RepairShop）→ 工單索引 woIdx＋排程 rsPlan ──
@@ -1562,7 +1593,7 @@ async function applyRsDir(interactive){
       const j=c.j,s=(j&&j.snap)||{};if(!j||!j.wo)continue;
       if(/^(OFF|退修|報廢)$/.test(j.u||s.u||'')&&(j.uAt||j.updatedAt||0)<old)continue;
       map[String(j.wo).toUpperCase()]={c:s.cust||'',n:String(s.model||'').toUpperCase(),t:s.type||'',u:j.u||s.u||''}}
-    if(JSON.stringify(map)!==JSON.stringify(woMap()))setMaster({woIdx:{at:new Date().toISOString(),map}});
+    if(JSON.stringify(map)!==JSON.stringify(woMap())||!(M().woIdx||{}).since)setMaster({woIdx:{at:new Date().toISOString(),since:(M().woIdx||{}).since||today(),map}});
     let pm='';try{const kh=await root.getFileHandle('rs_kiosk.json');const kj=JSON.parse((await (await kh.getFile()).text()).replace(/^﻿/,''));pm=rsPlanFromKiosk(kj)}catch(e){}
     return pm;
   }catch(e){return ' · Repair Shop 資料夾讀取失敗'}}
@@ -1620,7 +1651,7 @@ function renderQuick(){
     const done=live().filter(r=>r.date===Q.date&&r.staff===S);
     const isDone=(k,v,st)=>done.some(r=>k==='FS'?r.fsn===v:(r.wo===v&&(!st||r.station===st)));
     let h='';
-    fs.forEach(c=>{h+=`<button class="qjob fs ${Q.job&&Q.job.num===c.fsn?'on':''}" onclick="qPickNum('${esc(c.fsn)}')"><span class="qk">🚐 訊息單</span><b>${esc(c.c)}</b><small>${esc(c.ct||c.ty)}</small><small>${esc(c.t1)}–${esc(c.t2)}${(c.st||[]).length>1?' · '+esc(c.st.join('、')):''}</small>${isDone('FS',c.fsn)?'<span class="qdone">✔ 已報</span>':''}</button>`});
+    fs.forEach(c=>{h+=`<button class="qjob fs ${Q.job&&Q.job.num===c.fsn?'on':''}" onclick="qPickNum('${esc(c.fsn)}')"><span class="qk">🚐 訊息單</span><b>${esc(c.c)}</b><small class="qct" title="${esc(c.ct||c.ty)}">${esc(c.ct||c.ty)}</small><small>${esc(c.t1)}–${esc(c.t2)}${(c.st||[]).length>1?' · '+esc(c.st.join('、')):''}</small>${isDone('FS',c.fsn)?'<span class="qdone">✔ 已報</span>':''}</button>`});
     rs.forEach(p=>{h+=`<button class="qjob rs ${Q.job&&Q.job.num===p.wo&&Q.f.station===p.st?'on':''}" onclick="qPickNum('${esc(p.wo)}','${esc(p.st)}','${esc(p.t1||'')}','${esc(p.t2||'')}')"><span class="qk">🔧 ${esc(p.st)}</span><b>${esc(p.c)} ${esc(p.m)}</b><small>${esc(p.wo)}</small>${p.t1?`<small>${esc(p.t1)}–${esc(p.t2)}</small>`:''}${isDone('WO',p.wo,p.st)?'<span class="qdone">✔ 已報</span>':''}</button>`});
     J.innerHTML=h?`<div class="hint">📅 ${Q.date===today()?'今天':md(Q.date)} 排給 ${esc(S)} 的工作（點一下帶入）</div><div class="qjobs">${h}</div>`:`<div class="hint qhint">${md(Q.date)} 沒有排給 ${esc(S)} 的訊息單或工單，請輸入單號或選下面的工作</div>`}
   // 無單號工作
@@ -1731,7 +1762,9 @@ function renderQDay(){
     const num=r.fsn||r.wo||'';
     return `<div class="qday">${tagHTML(r.type)}<div class="qd1"><b>${r.start}–${r.end}</b> ${esc(what)}${r.unpl?' <span class="qunpl">計畫外</span>':''}<div class="hint">${esc(num)}${num&&r.note?' · ':''}${esc(r.note||'')}</div></div><span class="qh">${fmt1(hoursOf(r))}h</span>
       <button class="ib" title="修改" onclick="editRec('${k}','${r.id}');showTab('${k}')">✎</button><button class="ib del" title="刪除" onclick="delRec('${r.id}')">✕</button></div>`}).join('')
-    :'<div class="hint">還沒有紀錄</div>'}
+    :'<div class="hint">還沒有紀錄</div>';
+  const del=DB.records.filter(r=>r.deleted&&r.date===Q.date&&r.staff===S&&canRestore(r));
+  if(del.length)box.insertAdjacentHTML('beforeend',`<details class="qdel"><summary>🗑 這天刪除的紀錄（${del.length}）</summary>${del.map(r=>`<div class="qday">${tagHTML(r.type)}<div class="qd1"><s>${r.start}–${r.end}</s> ${esc(recWhat(r))}<div class="hint">${fdt(r.deletedAt||r.updatedAt)} ${esc(r.deletedBy||'')} 刪除</div></div><button class="btn btn-o btn-s" onclick="restoreRec('${r.id}')">↺ 還原</button></div>`).join('')}</details>`)}
 
 // ═══ 共用 ═══
 function showTab(p){document.querySelectorAll('.tab[data-p]').forEach(t=>t.classList.toggle('active',t.dataset.p===p));
